@@ -1,10 +1,32 @@
 {
-    "cSpell.words": [
-        "subspan",
-        "vals"
-    ],
-    "yaml.schemas": {
-      "https://json.schemastore.org/github-workflow.json": "file:///home/felix/projects/strudel/.github/workflows/deploy.yml"
-    },
-    "testing.automaticallyOpenPeekView": "never"
+  "[typescript]": {
+    "editor.defaultFormatter": "denoland.vscode-deno"
+  },
+  "cSpell.words": [
+    "subspan",
+    "vals"
+  ],
+  "deno.enablePaths": [
+    "supabase/functions"
+  ],
+  "deno.lint": true,
+  "deno.unstable": [
+    "bare-node-builtins",
+    "byonm",
+    "sloppy-imports",
+    "unsafe-proto",
+    "webgpu",
+    "broadcast-channel",
+    "worker-options",
+    "cron",
+    "kv",
+    "ffi",
+    "fs",
+    "http",
+    "net"
+  ],
+  "testing.automaticallyOpenPeekView": "never",
+  "yaml.schemas": {
+    "https://json.schemastore.org/github-workflow.json": "file:///home/felix/projects/strudel/.github/workflows/deploy.yml"
+  }
 }
