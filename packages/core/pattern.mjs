@@ -1,6 +1,6 @@
 /*
 pattern.mjs - Core pattern representation for strudel
-Copyright (C) 2025 Strudel contributors - see <https://codeberg.org/uzu/strudel/src/branch/main/packages/core/pattern.mjs>
+Copyright (C) 2025 Strudel contributors - see <https://github.com/tidalcycles/strudel/blob/main/packages/core/pattern.mjs>
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
@@ -21,6 +21,7 @@ import {
   numeralArgs,
   parseNumeral,
   pairs,
+  noteToMidi
 } from './util.mjs';
 import drawLine from './drawLine.mjs';
 import { logger } from './logger.mjs';
@@ -1814,9 +1815,9 @@ export const { fastGap, fastgap } = register(['fastGap', 'fastgap'], function (f
     const newWhole = !hap.whole
       ? undefined
       : new TimeSpan(
-          newPart.begin.sub(begin.sub(hap.whole.begin).div(factor)),
-          newPart.end.add(hap.whole.end.sub(end).div(factor)),
-        );
+        newPart.begin.sub(begin.sub(hap.whole.begin).div(factor)),
+        newPart.end.add(hap.whole.end.sub(end).div(factor)),
+      );
     return new Hap(newWhole, newPart, hap.value, hap.context);
   };
   return pat.withQuerySpanMaybe(qf).withHap(ef).splitQueries();
@@ -3340,3 +3341,50 @@ export const { beat } = register(
   ['beat'],
   __beat((x) => x.innerJoin()),
 );
+
+
+
+const __quantizeBy = (lens, scale, pat) => {
+  // Supports ':' list syntax in mininotation
+  scale = (Array.isArray(scale) ? scale.flat() : [scale]).flatMap((val) =>
+    typeof val === 'number' ? val : noteToMidi(val) - 48
+  );
+
+  return pat.withHap((hap) => {
+    const isObject = typeof hap.value === 'object';
+    let note = isObject ? hap.value.n : hap.value;
+    if (typeof note === 'number') {
+      note = note;
+    }
+    if (typeof note === 'string') {
+      note = noteToMidi(note);
+    }
+
+    if (isObject) {
+      delete hap.value.n; // remove n so it won't cause trouble
+    }
+    const octave = (note / lens) >> 0;
+    const transpose = octave * lens;
+
+    const goal = note - transpose;
+    note =
+      scale.reduce((prev, curr) => {
+        return Math.abs(curr - goal) < Math.abs(prev - goal) ? curr : prev;
+      }) + transpose;
+
+    return hap.withValue(() => (isObject ? { ...hap.value, note } : note));
+  });
+}
+
+
+/**
+ * Snap note values to a chosen array of notes within a 12 note/octave scale
+ * @name quantize
+ * @example
+ * note(irand(35).add(48).seg(16).quantize("d:a:a#:f")).s("pulse")
+ */
+export const { quantize } = register(
+  ['quantize'],
+  (scale, pat) => { return __quantizeBy(12, scale, pat) },
+);
+
