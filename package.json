@@ -4,6 +4,7 @@
   "private": true,
   "description": "Port of tidalcycles to javascript",
   "scripts": {
+    "strudeljson": "node ./website/src/repl/create_strudel_json.mjs",
     "setup": "pnpm i",
     "pretest": "npm run jsdoc-json",
     "prebuild": "npm run jsdoc-json",

@@ -33,7 +33,7 @@ async function loadStrudelJson(subpath) {
   });
 }
 
-async function writeStrudelJson(subpath) {
+export async function writeStrudelJson(subpath) {
   const children = await readDir(subpath, { dir, recursive: true });
   const name = subpath.split('/').slice(-1)[0];
   const tree = { name, children };
@@ -41,7 +41,7 @@ async function writeStrudelJson(subpath) {
   let samples = {};
   let count = 0;
   walkFileTree(tree, (entry, parent) => {
-    if (['wav', 'mp3'].includes(entry.name.split('.').slice(-1)[0])) {
+    if (['wav', 'mp3', 'aac', 'm4a'].includes(entry.name.split('.').slice(-1)[0])) {
       samples[parent.name] = samples[parent.name] || [];
       count += 1;
       samples[parent.name].push(entry.subpath.slice(1).concat([entry.name]).join('/'));
