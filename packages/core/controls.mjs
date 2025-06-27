@@ -166,7 +166,7 @@ export const { gain } = registerControl('gain');
  *
  * @name gainlinear
  * @synonyms gainlin
- * @param {number | Pattern} amount gainl.
+ * @param {number | Pattern} amount gainlin
  * @example
  * s("hh*8").gainlin(".4!2 1 .4!2 1 .4 1").fast(2)
  *
