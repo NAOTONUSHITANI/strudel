@@ -160,6 +160,18 @@ export const { velocity } = registerControl('velocity');
  *
  */
 export const { gain } = registerControl('gain');
+
+/**
+ * Applies a linear gain adjustment
+ *
+ * @name gainlinear
+ * @synonyms gainlin
+ * @param {number | Pattern} amount gainl.
+ * @example
+ * s("hh*8").gainlin(".4!2 1 .4!2 1 .4 1").fast(2)
+ *
+ */
+export const { gainlinear, gainlin } = registerControl('gainlinear', 'gainlin');
 /**
  * Gain applied after all effects have been processed.
  *

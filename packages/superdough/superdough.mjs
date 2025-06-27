@@ -35,7 +35,7 @@ export function registerSound(key, onTrigger, data = {}) {
   soundMap.setKey(key, { onTrigger, data });
 }
 
-let gainCurveFunc = (val) => val;
+let gainCurveFunc = (val) => Math.pow(val, 2);
 
 export function applyGainCurve(val) {
   return gainCurveFunc(val);
@@ -482,6 +482,7 @@ export const superdough = async (value, t, hapDuration, cps) => {
     bank,
     source,
     gain = getDefaultValue('gain'),
+    gainlinear,
     postgain = getDefaultValue('postgain'),
     density = getDefaultValue('density'),
     // filters
@@ -559,6 +560,9 @@ export const superdough = async (value, t, hapDuration, cps) => {
   delay = applyGainCurve(delay);
   velocity = applyGainCurve(velocity);
   gain *= velocity; // velocity currently only multiplies with gain. it might do other things in the future
+  if (gainlinear != null) {
+    gain *= gainlinear;
+  }
 
   const chainID = Math.round(Math.random() * 1000000);
 
