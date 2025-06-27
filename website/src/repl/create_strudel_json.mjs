@@ -42,11 +42,11 @@ rl.question(`enter sample folder path: `, async path => {
       const repo = githubparams[2];
 
       hosturl = `https://raw.githubusercontent.com/${username}/${repo}/main/`
-      console.log('reformatting github URL to: ', hosturl )
+      console.log('reformatting github URL to: ', hosturl)
     }
 
     await writeStrudelJson(path, hosturl)
     rl.close();
   })
- 
+
 });
