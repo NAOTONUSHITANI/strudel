@@ -46,10 +46,11 @@ export class Pattern {
    * @param {function} query - The function that maps a `State` to an array of `Hap`.
    * @noAutocomplete
    */
-  constructor(query, steps = undefined) {
+  constructor(query, steps = undefined, alignment = undefined) {
     this.query = query;
     this._Pattern = true; // this property is used to detectinstance of another Pattern
     this._steps = steps; // in terms of number of steps per cycle
+    this._alignment = alignment;
   }
 
   get _steps() {
@@ -74,6 +75,11 @@ export class Pattern {
 
   get hasSteps() {
     return this._steps !== undefined;
+  }
+
+  setAlignment(alignment) {
+    this._alignment = alignment;
+    return this;
   }
 
   //////////////////////////////////////////////////////////////////////
@@ -1610,8 +1616,13 @@ export function register(name, func, patternify = true, preserveSteps = false, j
           let mapFn = (...args) => {
             return func(...args, pat);
           };
-          mapFn = curry(mapFn, null, arity - 1);
-          result = join(right.reduce((acc, p) => acc.appLeft(p), left.fmap(mapFn)));
+          // mapFn = curry(mapFn, null, arity - 1);
+          // result = join(right.reduce((acc, p) => acc.appLeft(p), left.fmap(mapFn)));
+          // patternify2 f pata patb patc = pata >>= \a -> patb >>= \b -> f a b patc
+          function bindArgs(argv, pat, ...pats) {
+            return pat.innerBind((x) => (pats.length ? bindArgs([...argv, x], ...pats) : mapFn(...argv, x)));
+          }
+          result = bindArgs([], ...firstArgs);
         }
       }
       if (preserveSteps) {
