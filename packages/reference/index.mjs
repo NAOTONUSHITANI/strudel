@@ -1,2 +1,2 @@
-import jsdoc from '../../doc.json';
+import jsdoc from '/doc.json';
 export const reference = jsdoc;
