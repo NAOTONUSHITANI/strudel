@@ -6,7 +6,8 @@
     pnpm run jsdoc-json -- --destination website/public/doc.json &&
     cd website &&
     pnpm install &&
-    pnpm add @astrojs/netlify &&
+    pnpm add @astrojs/netlify cssesc &&
+    pnpm astro sync &&
     pnpm build
   """
   publish = "website/dist"

@@ -148,9 +148,8 @@ export default defineConfig({
       exclude: ['doc.json']
     },
     ssr: {
-      // Example: Force a broken package to skip SSR processing, if needed
-      // external: ['fraction.js'], // https://github.com/infusion/Fraction.js/issues/51
-      noExternal: true
+      noExternal: true,
+      external: ['cssesc']
     },
   },
 
