@@ -50,20 +50,19 @@ function relativeURLFix() {
     })(tree);
   };
 }
-const options = {
-  // See https://mdxjs.com/advanced/plugins
-  remarkPlugins: [
-    remarkToc,
-    // E.g. `remark-frontmatter`
-  ],
+
+const mdxOptions = {
+  remarkPlugins: [remarkToc],
   rehypePlugins: [rehypeSlug, [rehypeAutolinkHeadings, { behavior: 'append' }], relativeURLFix],
+  gfm: true,
+  smartypants: true,
 };
 
 // https://astro.build/config
 export default defineConfig({
   integrations: [
     react(),
-    mdx(options),
+    mdx(mdxOptions),
     tailwind(),
     AstroPWA({
       experimental: { directoryAndTrailingSlashHandler: true },
