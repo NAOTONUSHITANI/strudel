@@ -1,0 +1,16 @@
+[build]
+  base = "/"
+  command = "pnpm install && pnpm run jsdoc-json && cd website && pnpm install && pnpm build"
+  publish = "website/dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NPM_FLAGS = "--version"
+
+[dev]
+  framework = "astro"
+  targetPort = 4321
+  port = 9000
+  functionsPort = 9000
+
+ 
