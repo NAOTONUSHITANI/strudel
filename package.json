@@ -20,7 +20,7 @@
     "preview": "cd website && pnpm run preview",
     "osc": "cd packages/osc && pnpm run server",
     "jsdoc": "jsdoc packages/ -c jsdoc/jsdoc.config.json",
-    "jsdoc-json": "jsdoc packages/ --template ./node_modules/jsdoc-json --destination doc.json -c jsdoc/jsdoc.config.json",
+    "jsdoc-json": "jsdoc packages/ --template ./node_modules/jsdoc-json --destination website/public/doc.json -c jsdoc/jsdoc.config.json",
     "lint": "eslint . --quiet",
     "codeformat": "prettier --write .",
     "format-check": "prettier --check .",

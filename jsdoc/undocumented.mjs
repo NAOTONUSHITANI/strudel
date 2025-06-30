@@ -65,7 +65,7 @@ async function getUndocumented(path, docs) {
 }
 
 // read doc.json file
-const { docs } = JSON.parse(await readFile(resolve(__dirname, '..', 'doc.json'), 'utf8'));
+const { docs } = JSON.parse(await readFile(resolve(__dirname, '..', 'website', 'public', 'doc.json'), 'utf8'));
 
 const paths = dependencyTree.toList({
   filename: 'index.mjs',

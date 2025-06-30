@@ -4,7 +4,6 @@
     npm i -g pnpm &&
     pnpm config set auto-install-peers true &&
     pnpm install --no-frozen-lockfile --shamefully-hoist &&
-    pnpm run jsdoc-json -- --destination website/public/doc.json &&
     cd website &&
     pnpm install --no-frozen-lockfile --shamefully-hoist &&
     NODE_ENV=production pnpm astro sync &&
