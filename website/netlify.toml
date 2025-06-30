@@ -2,13 +2,13 @@
   base = "/"
   command = """
     npm i -g pnpm &&
-    pnpm install &&
+    pnpm install --no-frozen-lockfile &&
     pnpm run jsdoc-json -- --destination website/public/doc.json &&
     cd website &&
-    pnpm install &&
+    pnpm install --no-frozen-lockfile &&
     pnpm add @astrojs/netlify cssesc &&
-    pnpm astro sync &&
-    pnpm build
+    NODE_ENV=production pnpm astro sync &&
+    NODE_ENV=production pnpm build
   """
   publish = "website/dist"
 
@@ -16,11 +16,48 @@
   NODE_VERSION = "20"
   NPM_FLAGS = "--version"
   NETLIFY = "true"
+  CI = "true"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "interest-cohort=()"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false
+  conditions = {Role = ["admin", "cms"]}
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
 
 [dev]
   framework = "astro"
-  targetPort = 4321
-  port = 9000
-  functionsPort = 9000
+  targetPort = 3000
+
+[build.processing]
+  skip_processing = false
+[build.processing.css]
+  bundle = true
+  minify = true
+[build.processing.js]
+  bundle = true
+  minify = true
+[build.processing.html]
+  pretty_urls = true
+[build.processing.images]
+  compress = true
 
  

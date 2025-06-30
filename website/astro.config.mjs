@@ -6,46 +6,33 @@ import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeUrls from 'rehype-urls';
 import bundleAudioWorkletPlugin from 'vite-plugin-bundle-audioworklet';
-
 import tailwind from '@astrojs/tailwind';
 import AstroPWA from '@vite-pwa/astro';
-
 import netlify from '@astrojs/netlify';
 
-const site = `https://strudel.cc/`; // root url without a path
+const site = `https://strudel.cc`; // root url without a path
 const base = '/'; // base path of the strudel site
 const baseNoTrailing = base.endsWith('/') ? base.slice(0, -1) : base;
 
 // this rehype plugin fixes relative links
-// it works by prepending the base + page path to anchor links
-// and by prepending the base path to other relative links starting with /
-// this is necessary when using a base href like <base href={base} />
-// examples with base as "mybase":
-//   #gain -> /mybase/learn/effects/#gain
-//   /some/page -> /mybase/some/page
 function relativeURLFix() {
   return (tree, file) => {
-    const chunks = file.history[0].split('/src/pages/'); // file.history[0] is the file path
-    const path = chunks[chunks.length - 1].slice(0, -4); // only path inside src/pages, without .mdx
+    const chunks = file.history[0].split('/src/pages/');
+    const path = chunks[chunks.length - 1].slice(0, -4);
     return rehypeUrls((url) => {
       let newHref = baseNoTrailing;
       if (url.href.startsWith('#')) {
-        // special case: a relative anchor link to the current page
         newHref += `/${path}/${url.href}`;
       } else if (url.href.startsWith('/')) {
-        // any other relative url starting with /
         newHref += url.pathname;
         if (url.pathname.indexOf('.') == -1) {
-          // append trailing slash to resource only if there is no file extension
           newHref += url.pathname.endsWith('/') ? '' : '/';
         }
         newHref += url.search || '';
         newHref += url.hash || '';
       } else {
-        // leave this URL alone
         return;
       }
-      // console.log(url.href + ' -> ', newHref);
       return newHref;
     })(tree);
   };
@@ -53,7 +40,11 @@ function relativeURLFix() {
 
 const mdxOptions = {
   remarkPlugins: [remarkToc],
-  rehypePlugins: [rehypeSlug, [rehypeAutolinkHeadings, { behavior: 'append' }], relativeURLFix],
+  rehypePlugins: [
+    rehypeSlug,
+    [rehypeAutolinkHeadings, { behavior: 'append' }],
+    relativeURLFix
+  ],
   gfm: true,
   smartypants: true,
 };
@@ -61,15 +52,20 @@ const mdxOptions = {
 // https://astro.build/config
 export default defineConfig({
   integrations: [
-    react(),
+    react({
+      include: ['**/*.{jsx,tsx}'],
+      ssr: true
+    }),
     mdx(mdxOptions),
-    tailwind(),
+    tailwind({
+      config: { path: './tailwind.config.mjs' }
+    }),
     AstroPWA({
       experimental: { directoryAndTrailingSlashHandler: true },
       registerType: 'autoUpdate',
       injectRegister: 'auto',
       workbox: {
-        maximumFileSizeToCacheInBytes: 4194304, // 4MB
+        maximumFileSizeToCacheInBytes: 4194304,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json,wav,mp3,ogg,ttf,woff2,TTF,otf}'],
         runtimeCaching: [
           {
@@ -85,7 +81,7 @@ export default defineConfig({
               cacheName: 'external-samples',
               expiration: {
                 maxEntries: 5000,
-                maxAgeSeconds: 60 * 60 * 24 * 30, // <== 14 days
+                maxAgeSeconds: 60 * 60 * 24 * 30,
               },
               cacheableResponse: {
                 statuses: [0, 200],
@@ -141,18 +137,31 @@ export default defineConfig({
     plugins: [bundleAudioWorkletPlugin()],
     build: {
       rollupOptions: {
-        external: ['/doc.json']
-      }
+        external: ['/doc.json'],
+        output: {
+          manualChunks: {
+            'react-vendor': ['react', 'react-dom'],
+            'astro-vendor': ['astro']
+          }
+        }
+      },
+      cssCodeSplit: true,
+      sourcemap: true
     },
     optimizeDeps: {
-      exclude: ['doc.json']
+      exclude: ['doc.json'],
+      include: ['react', 'react-dom']
     },
     ssr: {
       noExternal: true,
-      external: ['cssesc']
-    },
+      external: ['cssesc', 'node:*']
+    }
   },
 
   output: 'server',
-  adapter: netlify(),
+  adapter: netlify({
+    edgeMiddleware: false,
+    functionPerRoute: false,
+    split: false
+  }),
 });
