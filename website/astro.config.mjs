@@ -10,6 +10,8 @@ import bundleAudioWorkletPlugin from 'vite-plugin-bundle-audioworklet';
 import tailwind from '@astrojs/tailwind';
 import AstroPWA from '@vite-pwa/astro';
 
+import netlify from '@astrojs/netlify';
+
 const site = `https://strudel.cc/`; // root url without a path
 const base = '/'; // base path of the strudel site
 const baseNoTrailing = base.endsWith('/') ? base.slice(0, -1) : base;
@@ -132,13 +134,30 @@ export default defineConfig({
       },
     }),
   ],
+
   site,
   base,
+
   vite: {
     plugins: [bundleAudioWorkletPlugin()],
+    build: {
+      rollupOptions: {
+        external: ['/doc.json']
+      }
+    },
+    optimizeDeps: {
+      exclude: ['doc.json']
+    },
     ssr: {
       // Example: Force a broken package to skip SSR processing, if needed
       // external: ['fraction.js'], // https://github.com/infusion/Fraction.js/issues/51
+      noExternal: true
     },
   },
+
+  output: 'server',
+  adapter: netlify({
+    edgeMiddleware: true,
+    functionPerRoute: true,
+  }),
 });

@@ -1,18 +1,33 @@
-import jsdoc from '/doc.json'; // doc.json is built with `npm run jsdoc-json`
-const docs = jsdoc.docs.reduce((acc, obj) => Object.assign(acc, { [obj.longname]: obj }), {});
+import { useState, useEffect } from 'react';
 import { MiniRepl } from './MiniRepl';
 
 export function JsDoc({ name, h = 3, hideDescription, punchcard, canvasHeight }) {
+  const [docs, setDocs] = useState({});
+  
+  useEffect(() => {
+    fetch('/doc.json')
+      .then(response => response.json())
+      .then(jsdoc => {
+        const docsMap = jsdoc.docs.reduce((acc, obj) => Object.assign(acc, { [obj.longname]: obj }), {});
+        setDocs(docsMap);
+      })
+      .catch(error => {
+        console.error('Error loading doc.json:', error);
+      });
+  }, []);
+
   const item = docs[name];
   if (!item) {
     console.warn('Not found: ' + name);
     return <div />;
   }
+  
   const CustomHeading = `h${h}`;
   const description =
     item.description?.replaceAll(/\{@link ([a-zA-Z\.]+)?#?([a-zA-Z]*)\}/g, (_, a, b) => {
       return `<a href="#${a.replaceAll('.', '').toLowerCase()}${b ? `-${b}` : ''}">${a}${b ? `#${b}` : ''}</a>`;
     }) || '';
+  
   return (
     <>
       {!!h && <CustomHeading>{item.longname}</CustomHeading>}
