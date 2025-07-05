@@ -168,8 +168,12 @@ export function resetDefaultValues() {
 }
 export function setVersionDefaults(version) {
   resetDefaultValues();
-  if (version === '1.0') {
+  const v = Number(version);
+  if (v <= 1.0) {
     setDefaultValue('fanchor', 0.5);
+  }
+  if (v <= 1.2) {
+    setDefaultValue('gain', 0.8);
   }
 }
 
