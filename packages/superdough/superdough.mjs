@@ -174,6 +174,10 @@ export function setVersionDefaults(version) {
   }
   if (v <= 1.2) {
     setDefaultValue('gain', 0.8);
+    setGainCurve((v) => v);
+  } else {
+    setDefaultValue('gain', 1);
+    setGainCurve((v) => Math.pow(v, 2));
   }
 }
 
