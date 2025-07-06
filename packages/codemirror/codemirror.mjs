@@ -62,11 +62,12 @@ export const codemirrorSettings = persistentAtom('codemirror-settings', defaultS
 });
 
 // https://codemirror.net/docs/guide/
-export function initEditor({ initialCode = '', onChange, onEvaluate, onStop, root }) {
+export function initEditor({ initialCode = '', onChange, onEvaluate, onStop, root, mondo }) {
   const settings = codemirrorSettings.get();
   const initialSettings = Object.keys(compartments).map((key) =>
     compartments[key].of(extensions[key](parseBooleans(settings[key]))),
   );
+
   initTheme(settings.theme);
   let state = EditorState.create({
     doc: initialCode,
@@ -74,7 +75,7 @@ export function initEditor({ initialCode = '', onChange, onEvaluate, onStop, roo
       /* search(),
       highlightSelectionMatches(), */
       ...initialSettings,
-      javascript(),
+      mondo ? [] : javascript(),
       sliderPlugin,
       widgetPlugin,
       // indentOnInput(), // works without. already brought with javascript extension?
@@ -208,6 +209,7 @@ export class StrudelMirror {
       },
       onEvaluate: () => this.evaluate(),
       onStop: () => this.stop(),
+      mondo: replOptions.mondo,
     });
     const cmEditor = this.root.querySelector('.cm-editor');
     if (cmEditor) {

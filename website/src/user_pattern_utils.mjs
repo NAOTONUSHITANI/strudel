@@ -96,7 +96,7 @@ export async function loadDBPatterns() {
   }
 }
 
-// reason: https://github.com/tidalcycles/strudel/issues/857
+// reason: https://codeberg.org/uzu/strudel/issues/857
 const $activePattern = sessionAtom('activePattern', '');
 
 export function setActivePattern(key) {
@@ -111,7 +111,7 @@ export function useActivePattern() {
 
 export const setLatestCode = (code) => settingsMap.setKey('latestCode', code);
 
-const defaultCode = '';
+export const defaultCode = '';
 export const userPattern = {
   collection: patternFilterName.user,
   getAll() {
