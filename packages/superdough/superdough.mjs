@@ -14,6 +14,20 @@ import { map } from 'nanostores';
 import { logger } from './logger.mjs';
 import { loadBuffer } from './sampler.mjs';
 
+let audioContext;
+
+export function getAudioContext() {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  return audioContext;
+}
+
+export const setDefaultAudioContext = () => {
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  return audioContext;
+};
+
 export const DEFAULT_MAX_POLYPHONY = 128;
 const DEFAULT_AUDIO_DEVICE_NAME = 'System Standard';
 
@@ -171,21 +185,6 @@ export function setVersionDefaults(version) {
 
 export const resetLoadedSounds = () => soundMap.set({});
 
-let audioContext;
-
-export const setDefaultAudioContext = () => {
-  audioContext = new AudioContext();
-  return audioContext;
-};
-
-export const getAudioContext = () => {
-  if (!audioContext) {
-    return setDefaultAudioContext();
-  }
-
-  return audioContext;
-};
-
 export function getAudioContextCurrentTime() {
   return getAudioContext().currentTime;
 }
@@ -196,7 +195,6 @@ function loadWorklets() {
     const audioCtx = getAudioContext();
     workletsLoading = audioCtx.audioWorklet.addModule(workletsUrl);
   }
-
   return workletsLoading;
 }
 
@@ -757,3 +755,21 @@ export const superdough = async (value, t, hapDuration, cps) => {
 export const superdoughTrigger = (t, hap, ct, cps) => {
   superdough(hap, t - ct, hap.duration / cps, cps);
 };
+
+export class SuperDough {
+  constructor() {
+    this.audioContext = getAudioContext();
+    this.initialized = false;
+  }
+
+  async init() {
+    if (this.initialized) {
+      return;
+    }
+    const blob = new Blob([workletsUrl], { type: 'text/javascript' });
+    const url = URL.createObjectURL(blob);
+    await this.audioContext.audioWorklet.addModule(url);
+    URL.revokeObjectURL(url);
+    this.initialized = true;
+  }
+}

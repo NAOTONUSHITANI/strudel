@@ -1,5 +1,5 @@
 import { hoverTooltip } from '@codemirror/view';
-import jsdoc from '/doc.json';
+import jsdoc from '../../website/src/doc.json';
 import { Autocomplete } from './autocomplete.mjs';
 
 const getDocLabel = (doc) => doc.name || doc.longname;
