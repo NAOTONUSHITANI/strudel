@@ -54,14 +54,10 @@ export default defineConfig({
 
   output: 'server',
   adapter: netlify({
-    edgeMiddleware: false,
-    functionPerRoute: false,
+    edgeMiddleware: true,
+    functionPerRoute: true,
     split: true,
-    assets: 'dist',
-    dist: {
-      client: 'dist/client',
-      server: 'dist/server',
-    }
+    assets: 'dist'
   }),
 
   vite: {
