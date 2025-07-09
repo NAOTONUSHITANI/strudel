@@ -1,51 +1,38 @@
 [build]
-  base = "/"
-  command = """
-    npm i -g pnpm &&
-    pnpm config set auto-install-peers true &&
-    pnpm install --no-frozen-lockfile --shamefully-hoist &&
-    cd website &&
-    pnpm install --no-frozen-lockfile --shamefully-hoist &&
-    NODE_ENV=production pnpm astro sync &&
-    NODE_ENV=production pnpm build
-  """
-  publish = "website/dist"
-
-[build.environment]
-  NODE_VERSION = "20"
-  NPM_FLAGS = "--version"
-  NETLIFY = "true"
-  CI = "true"
-  PNPM_FLAGS = "--shamefully-hoist"
-
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-XSS-Protection = "1; mode=block"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "interest-cohort=()"
-
-[[headers]]
-  for = "/assets/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-  force = false
-  conditions = {Role = ["admin", "cms"]}
+  command = "pnpm build"
+  publish = "dist"
+  functions = "netlify/functions"
 
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
+  external_node_modules = ["@resvg/resvg-js"]
+  included_files = ["dist/client/**/*"]
 
 [dev]
-  framework = "astro"
-  targetPort = 3000
+  framework = "#custom"
+  command = "pnpm astro dev"
+  targetPort = 4321
+  port = 8888
+  publish = "dist"
+  autoLaunch = false
+  host = "0.0.0.0"
+
+[[redirects]]
+  from = "/api/chat"
+  to = "/.netlify/functions/chat"
+  status = 200
+
+[[redirects]]
+  from = "/.netlify/functions/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+[build.environment]
+  NODE_VERSION = "20.11.1"
+  NPM_FLAGS = "--version"
+  NETLIFY = "true"
+  SHARP_IGNORE_GLOBAL = "true"
 
 [build.processing]
   skip_processing = false

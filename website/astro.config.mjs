@@ -7,161 +7,93 @@ import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeUrls from 'rehype-urls';
 import bundleAudioWorkletPlugin from 'vite-plugin-bundle-audioworklet';
 import tailwind from '@astrojs/tailwind';
-import AstroPWA from '@vite-pwa/astro';
 import netlify from '@astrojs/netlify';
 
-const site = `https://strudel.cc`; // root url without a path
-const base = '/'; // base path of the strudel site
+const site = `https://strudel.cc`;
+const base = '/';
 const baseNoTrailing = base.endsWith('/') ? base.slice(0, -1) : base;
-
-// this rehype plugin fixes relative links
-function relativeURLFix() {
-  return (tree, file) => {
-    const chunks = file.history[0].split('/src/pages/');
-    const path = chunks[chunks.length - 1].slice(0, -4);
-    return rehypeUrls((url) => {
-      let newHref = baseNoTrailing;
-      if (url.href.startsWith('#')) {
-        newHref += `/${path}/${url.href}`;
-      } else if (url.href.startsWith('/')) {
-        newHref += url.pathname;
-        if (url.pathname.indexOf('.') == -1) {
-          newHref += url.pathname.endsWith('/') ? '' : '/';
-        }
-        newHref += url.search || '';
-        newHref += url.hash || '';
-      } else {
-        return;
-      }
-      return newHref;
-    })(tree);
-  };
-}
 
 const mdxOptions = {
   remarkPlugins: [remarkToc],
   rehypePlugins: [
     rehypeSlug,
-    [rehypeAutolinkHeadings, { behavior: 'append' }],
-    relativeURLFix
+    [rehypeAutolinkHeadings, { behavior: 'wrap' }],
+    [
+      rehypeUrls,
+      (url) => {
+        if (url.href?.startsWith('/')) {
+          url.href = `${baseNoTrailing}${url.href}`;
+        }
+        return url;
+      },
+    ],
   ],
-  gfm: true,
-  smartypants: true,
 };
 
 // https://astro.build/config
 export default defineConfig({
+  server: {
+    host: '0.0.0.0',
+    port: 4321,
+    cors: true
+  },
+
   integrations: [
     react({
       include: ['**/*.{jsx,tsx}'],
-      ssr: true
+      experimentalReactChildren: true
     }),
     mdx(mdxOptions),
     tailwind({
       config: { path: './tailwind.config.mjs' }
-    }),
-    AstroPWA({
-      experimental: { directoryAndTrailingSlashHandler: true },
-      registerType: 'autoUpdate',
-      injectRegister: 'auto',
-      workbox: {
-        maximumFileSizeToCacheInBytes: 4194304,
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,json,wav,mp3,ogg,ttf,woff2,TTF,otf}'],
-        runtimeCaching: [
-          {
-            urlPattern: ({ url }) =>
-              [
-                /^https:\/\/raw\.githubusercontent\.com\/.*/i,
-                /^https:\/\/freesound\.org\/.*/i,
-                /^https:\/\/cdn\.freesound\.org\/.*/i,
-                /^https:\/\/shabda\.ndre\.gr\/.*/i,
-              ].some((regex) => regex.test(url)),
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'external-samples',
-              expiration: {
-                maxEntries: 5000,
-                maxAgeSeconds: 60 * 60 * 24 * 30,
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
-          },
-        ],
-      },
-      devOptions: {
-        enabled: false,
-      },
-      manifest: {
-        includeAssets: ['favicon.ico', 'icons/apple-icon-180.png'],
-        name: 'Strudel REPL',
-        short_name: 'Strudel',
-        description:
-          'Strudel is a music live coding environment for the browser, porting the TidalCycles pattern language to JavaScript.',
-        theme_color: '#222222',
-        icons: [
-          {
-            src: 'icons/manifest-icon-192.maskable.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any',
-          },
-          {
-            src: 'icons/manifest-icon-192.maskable.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'maskable',
-          },
-          {
-            src: 'icons/manifest-icon-512.maskable.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any',
-          },
-          {
-            src: 'icons/manifest-icon-512.maskable.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable',
-          },
-        ],
-      },
-    }),
+    })
   ],
 
   site,
   base,
 
-  vite: {
-    plugins: [bundleAudioWorkletPlugin()],
-    build: {
-      rollupOptions: {
-        external: ['/doc.json'],
-        output: {
-          manualChunks: {
-            'react-vendor': ['react', 'react-dom'],
-            'astro-vendor': ['astro']
-          }
-        }
-      },
-      cssCodeSplit: true,
-      sourcemap: true
-    },
-    optimizeDeps: {
-      exclude: ['doc.json'],
-      include: ['react', 'react-dom']
-    },
-    ssr: {
-      noExternal: true,
-      external: ['cssesc', 'node:*']
-    }
-  },
-
   output: 'server',
   adapter: netlify({
     edgeMiddleware: false,
     functionPerRoute: false,
-    split: false
+    split: true,
+    assets: 'dist',
+    dist: {
+      client: 'dist/client',
+      server: 'dist/server',
+    }
   }),
+
+  vite: {
+    plugins: [bundleAudioWorkletPlugin()],
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'react-vendor': ['react', 'react-dom'],
+            'astro-vendor': ['astro'],
+            'codemirror': ['@codemirror/state', '@codemirror/view', '@codemirror/language'],
+            'csound': ['@csound/browser'],
+            'audio': ['tone']
+          }
+        },
+        external: ['@strudel/webaudio']
+      },
+      cssCodeSplit: true,
+      sourcemap: true,
+      chunkSizeWarningLimit: 1000
+    },
+    optimizeDeps: {
+      include: ['react', 'react-dom', '@strudel/core', '@strudel/webaudio', '@strudel/transpiler']
+    },
+    server: {
+      host: '0.0.0.0',
+      cors: true,
+      hmr: {
+        host: '0.0.0.0',
+        clientPort: 4321,
+        protocol: 'ws'
+      }
+    }
+  }
 });

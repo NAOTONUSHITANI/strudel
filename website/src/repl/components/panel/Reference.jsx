@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
-import jsdocJson from '/doc.json';
+import jsdocJson from '../../../doc.json';
 import { Textbox } from '../textbox/Textbox';
 const availableFunctions = jsdocJson.docs
   .filter(({ name, description }) => name && !name.startsWith('_') && !!description)

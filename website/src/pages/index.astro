@@ -1,6 +1,7 @@
 ---
 import HeadCommon from '../components/HeadCommon.astro';
 import { Repl } from '../repl/Repl';
+import AIChat from '../components/AIChat/AIChat.astro';
 ---
 
 <html lang="en" class="m-0 dark">
@@ -10,6 +11,7 @@ import { Repl } from '../repl/Repl';
   </head>
   <body class="h-app-height bg-background m-0">
     <Repl client:only="react" />
+    <AIChat />
     <a rel="me" href="https://social.toplap.org/@strudel" target="_blank" class="hidden">mastodon</a>
   </body>
 </html>
