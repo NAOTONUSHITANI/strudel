@@ -204,8 +204,15 @@ export const getAudioContext = () => {
 export function getAudioContextCurrentTime() {
   return getAudioContext().currentTime;
 }
+
+let resCurveFunc = (res) => Math.min(30.03, Math.pow(res * 5.48, 2));
+
+export function setResCurve(newFunc) {
+  resCurveFunc = newFunc;
+}
+
 function applyResonanceCurve(res) {
-  return Math.min(30.03, Math.pow(res * 5.48, 2));
+  return resCurveFunc(res);
 }
 
 let workletsLoading;
