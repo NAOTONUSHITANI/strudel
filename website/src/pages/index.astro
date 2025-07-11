@@ -1,17 +1,22 @@
 ---
-import HeadCommon from '../components/HeadCommon.astro';
-import { Repl } from '../repl/Repl';
-import AIChat from '../components/AIChat/AIChat.astro';
+import MainLayout from '../layouts/MainLayout.astro';
 ---
 
-<html lang="en" class="m-0 dark">
-  <head>
-    <HeadCommon />
-    <title>Strudel REPL</title>
-  </head>
-  <body class="h-app-height bg-background m-0">
-    <Repl client:only="react" />
-    <AIChat />
-    <a rel="me" href="https://social.toplap.org/@strudel" target="_blank" class="hidden">mastodon</a>
-  </body>
-</html>
+<MainLayout>
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-4xl font-bold mb-4">Welcome to Strudel</h1>
+    <p class="text-lg mb-4">
+      A live coding environment for the browser, powered by JavaScript and Web Audio.
+    </p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-2xl font-semibold mb-3">Get Started</h2>
+        <p>Start making music right in your browser with Strudel's live coding environment.</p>
+      </div>
+      <div class="bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-2xl font-semibold mb-3">Learn More</h2>
+        <p>Explore our documentation and tutorials to learn how to use Strudel.</p>
+      </div>
+    </div>
+  </div>
+</MainLayout> 

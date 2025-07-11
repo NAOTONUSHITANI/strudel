@@ -1,0 +1,12 @@
+---
+import ReplLayout from '../layouts/ReplLayout.astro';
+import ReplEditor from '../repl/components/ReplEditor.jsx';
+---
+
+<ReplLayout>
+  <div class="flex flex-col h-screen">
+    <main class="flex-1">
+      <ReplEditor client:load />
+    </main>
+  </div>
+</ReplLayout>

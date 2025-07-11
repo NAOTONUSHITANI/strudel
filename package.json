@@ -23,6 +23,7 @@
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
     "@vitest/coverage-v8": "^1.6.1",
+    "debug": "^4.4.1",
     "eslint": "^8.57.1",
     "husky": "^8.0.3",
     "jsdoc": "^4.0.4",
