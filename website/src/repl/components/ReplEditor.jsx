@@ -6,6 +6,7 @@ import UserFacingErrorMessage from '@src/repl/components/UserFacingErrorMessage'
 import { Header } from './Header';
 import { useSettings } from '@src/settings.mjs';
 import { TemplateSelector } from '@components/TemplateSelector';
+import { Chat } from '@components/Chat';
 
 // type Props = {
 //  context: replcontext,
@@ -18,7 +19,7 @@ export default function ReplEditor(Props) {
   const { panelPosition, isZen } = settings;
   const [isTemplateSelectorOpen, setTemplateSelectorOpen] = useState(false);
 
-  const handleInsertTemplate = (code) => {
+  const handleInsertCode = (code) => {
     if (view) {
       const { from, to } = view.state.selection.main;
       view.dispatch({
@@ -39,10 +40,11 @@ export default function ReplEditor(Props) {
       {!isZen && panelPosition === 'bottom' && <HorizontalPanel context={context} />}
       {isTemplateSelectorOpen && (
         <TemplateSelector
-          onInsert={handleInsertTemplate}
+          onInsert={handleInsertCode}
           onClose={() => setTemplateSelectorOpen(false)}
         />
       )}
+      <Chat onInsertCode={handleInsertCode} />
     </div>
   );
 }
