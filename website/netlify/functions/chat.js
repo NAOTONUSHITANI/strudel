@@ -1,5 +1,7 @@
 // website/netlify/functions/chat.js
 
+const fetch = require('node-fetch');
+
 // Strudelに特化したAIアシスタントの役割を定義するシステムプロンプト
 const strudelAssistantPrompt = `あなたはStrudelというWebベースのライブコーディング環境に特化したAIアシスタントです。ユーザーの指示に応じて、正しいStrudelコードを生成してください。コードには可能な限り日本語のコメントをつけてください。`;
 

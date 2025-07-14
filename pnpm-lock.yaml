@@ -792,6 +792,9 @@ importers:
       nanostores:
         specifier: ^0.11.3
         version: 0.11.3
+      node-fetch:
+        specifier: ^3.3.2
+        version: 3.3.2
       react:
         specifier: ^19.0.0
         version: 19.0.0
@@ -8331,7 +8334,7 @@ snapshots:
     dependencies:
       '@babel/compat-data': 7.28.0
       '@babel/helper-validator-option': 7.27.1
-      browserslist: 4.24.4
+      browserslist: 4.25.1
       lru-cache: 5.1.1
       semver: 6.3.1
 
@@ -9822,7 +9825,7 @@ snapshots:
       '@octokit/request-error': 3.0.3
       '@octokit/types': 9.3.2
       is-plain-object: 5.0.0
-      node-fetch: 2.6.7(encoding@0.1.13)
+      node-fetch: 2.7.0(encoding@0.1.13)
       universal-user-agent: 6.0.1
     transitivePeerDependencies:
       - encoding

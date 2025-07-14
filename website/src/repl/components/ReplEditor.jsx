@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Loader from '@src/repl/components/Loader';
 import { HorizontalPanel, VerticalPanel } from '@src/repl/components/panel/Panel';
 import { Code } from '@src/repl/components/Code';
@@ -8,23 +8,32 @@ import { useSettings } from '@src/settings.mjs';
 import { TemplateSelector } from '@components/TemplateSelector';
 import { Chat } from '@components/Chat';
 
-// type Props = {
-//  context: replcontext,
-// }
-
 export default function ReplEditor(Props) {
   const { context, ...editorProps } = Props;
-  const { containerRef, editorRef, error, init, pending, view } = context;
+  const { containerRef, editorRef: contextEditorRef, error, init, pending, view } = context;
   const settings = useSettings();
   const { panelPosition, isZen } = settings;
   const [isTemplateSelectorOpen, setTemplateSelectorOpen] = useState(false);
+  
+  // このコンポーネント専用のrefを作成し、contextのviewを監視して更新する
+  const viewRef = useRef(null);
+  useEffect(() => {
+    if (view) {
+      viewRef.current = view;
+    }
+  }, [view]);
 
   const handleInsertCode = (code) => {
-    if (view) {
-      const { from, to } = view.state.selection.main;
-      view.dispatch({
+    const editorView = viewRef.current;
+    if (editorView && editorView.state) {
+      const { from, to } = editorView.state.selection.main;
+      editorView.dispatch({
         changes: { from, to, insert: code },
       });
+      editorView.focus();
+    } else {
+      console.error('Editor view is not ready for insertion.');
+      alert('エディタの準備ができていません。少し待ってからもう一度お試しください。');
     }
   };
 
@@ -33,7 +42,7 @@ export default function ReplEditor(Props) {
       <Loader active={pending} />
       <Header context={context} onOpenTemplateSelector={() => setTemplateSelectorOpen(true)} />
       <div className="grow flex relative overflow-hidden">
-        <Code containerRef={containerRef} editorRef={editorRef} init={init} />
+        <Code containerRef={containerRef} editorRef={contextEditorRef} init={init} />
         {!isZen && panelPosition === 'right' && <VerticalPanel context={context} />}
       </div>
       <UserFacingErrorMessage error={error} />

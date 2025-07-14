@@ -33,6 +33,7 @@
     "@strudel/hydra": "workspace:*",
     "@strudel/midi": "workspace:*",
     "@strudel/mini": "workspace:*",
+    "@strudel/mondo": "workspace:*",
     "@strudel/motion": "workspace:*",
     "@strudel/mqtt": "workspace:*",
     "@strudel/osc": "workspace:*",
@@ -42,7 +43,6 @@
     "@strudel/tonal": "workspace:*",
     "@strudel/transpiler": "workspace:*",
     "@strudel/webaudio": "workspace:*",
-    "@strudel/mondo": "workspace:*",
     "@strudel/xen": "workspace:*",
     "@supabase/supabase-js": "^2.48.1",
     "@tailwindcss/forms": "^0.5.10",
@@ -59,6 +59,7 @@
     "hs2js": "0.1.0",
     "nanoid": "^5.0.9",
     "nanostores": "^0.11.3",
+    "node-fetch": "^3.3.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-inview": "^4.5.1",
@@ -74,7 +75,7 @@
     "@vite-pwa/astro": "^0.5.0",
     "html-escaper": "^3.0.3",
     "sharp": "^0.33.5",
-    "workbox-window": "^7.3.0",
-    "vite-plugin-bundle-audioworklet": "workspace:*"
+    "vite-plugin-bundle-audioworklet": "workspace:*",
+    "workbox-window": "^7.3.0"
   }
 }
