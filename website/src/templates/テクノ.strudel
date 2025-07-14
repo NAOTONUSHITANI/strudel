@@ -1,0 +1,4 @@
+// 4つ打ちのキックとオフビートハイハット
+p1: s("bd hh*2 bd hh*2").bank("tr909").gain(1.1),
+// シーケンスフレーズ
+p2: n("0 3 7 10 12 10 7 3").s("synth").release(0.1).cutoff(sine.slow(4).range(400, 2000))

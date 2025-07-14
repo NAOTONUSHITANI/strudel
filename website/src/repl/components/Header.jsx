@@ -7,7 +7,7 @@ import '../Repl.css';
 const { BASE_URL } = import.meta.env;
 const baseNoTrailing = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
 
-export function Header({ context, embedded = false }) {
+export function Header({ context, embedded = false, onOpenTemplateSelector }) {
   const { started, pending, isDirty, activeCode, handleTogglePlay, handleEvaluate, handleShuffle, handleShare } =
     context;
   const isEmbedded = typeof window !== 'undefined' && (embedded || window.location !== window.parent.location);
@@ -102,6 +102,15 @@ export function Header({ context, embedded = false }) {
               <span> shuffle</span>
             </button>
           ) */}
+          {!isEmbedded && (
+            <button
+              title="templates"
+              className={cx('cursor-pointer hover:opacity-50 flex items-center space-x-1', !isEmbedded ? 'p-2' : 'px-2')}
+              onClick={onOpenTemplateSelector}
+            >
+              <span>templates</span>
+            </button>
+          )}
           {!isEmbedded && (
             <button
               title="share"

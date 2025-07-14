@@ -1,0 +1,6 @@
+// Lo-fiなドラムパターン（少し揺らぎを加えています）
+p1: s("kick ~ snare ~ kick [~ snare] hh*2").swing(0.05).gain(0.9).bank("drumkit"),
+// ローズピアノによるジャジーなコード
+p2: n("<g4maj7 a4min7>").s("rhodes").release(2.5).gain(0.7),
+// シンプルなベースライン
+p3: n("g2 a2").s("bass").release(0.6).gain(0.8)

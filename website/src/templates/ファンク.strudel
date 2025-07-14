@@ -1,0 +1,6 @@
+// ファンキーな16ビートドラム
+p1: s("bd ~ sd ~ bd bd sd ~").every(2, p => p.add(0.1)).swing(0.1).bank("drumkit"),
+// ベースライン
+p2: n("0 0 3 5 0 0 3 0").add(-24).s("bass").gain(0.9),
+// カッティングギター
+p3: s("~ [~ cp] ~ cp").every(4, rev).gain(0.8)
