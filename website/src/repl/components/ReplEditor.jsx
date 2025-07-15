@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import Loader from '@src/repl/components/Loader';
 import { HorizontalPanel, VerticalPanel } from '@src/repl/components/panel/Panel';
 import { Code } from '@src/repl/components/Code';
@@ -14,33 +14,55 @@ export default function ReplEditor(Props) {
   const settings = useSettings();
   const { panelPosition, isZen } = settings;
   const [isTemplateSelectorOpen, setTemplateSelectorOpen] = useState(false);
-  
-  // このコンポーネント専用のrefを作成し、contextのviewを監視して更新する
-  const viewRef = useRef(null);
-  useEffect(() => {
-    if (view) {
-      viewRef.current = view;
-    }
-  }, [view]);
+
+  const handleOpenTemplateSelector = () => {
+    setTemplateSelectorOpen(true);
+  };
 
   const handleInsertCode = (code) => {
-    const editorView = viewRef.current;
-    if (editorView && editorView.state) {
-      const { from, to } = editorView.state.selection.main;
+    // エディタのビューが準備できている���確認
+    if (!view) {
+      console.error('Editor view is not ready for insertion.');
+      alert('エディタの準備ができていません。少し待ってからもう一度お試しください。');
+      return;
+    }
+
+    // エディタの状態を取得
+    const editorView = view;
+    const state = editorView.state;
+    if (!state) {
+      console.error('Editor state is not available.');
+      alert('エディタの状態が取得できません。ページを再読み込みしてください。');
+      return;
+    }
+
+    try {
+      // カーソル位置を取得
+      const { from, to } = state.selection.main;
+      
+      // コードを挿入
       editorView.dispatch({
         changes: { from, to, insert: code },
       });
+      
+      // エディタにフォーカスを戻す
       editorView.focus();
-    } else {
-      console.error('Editor view is not ready for insertion.');
-      alert('エディタの準備ができていません。少し待ってからもう一度お試しください。');
+    } catch (err) {
+      console.error('Failed to insert code:', err);
+      alert('コードの挿入に失敗しました。もう一度お試しください。');
     }
   };
+
+  const isEditorReady = !!view;
 
   return (
     <div className="h-full flex flex-col relative" {...editorProps}>
       <Loader active={pending} />
-      <Header context={context} onOpenTemplateSelector={() => setTemplateSelectorOpen(true)} />
+      <Header
+        context={context}
+        onOpenTemplateSelector={handleOpenTemplateSelector}
+        isEditorReady={isEditorReady}
+      />
       <div className="grow flex relative overflow-hidden">
         <Code containerRef={containerRef} editorRef={contextEditorRef} init={init} />
         {!isZen && panelPosition === 'right' && <VerticalPanel context={context} />}
@@ -57,3 +79,4 @@ export default function ReplEditor(Props) {
     </div>
   );
 }
+

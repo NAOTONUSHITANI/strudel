@@ -7,7 +7,7 @@ import '../Repl.css';
 const { BASE_URL } = import.meta.env;
 const baseNoTrailing = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
 
-export function Header({ context, embedded = false, onOpenTemplateSelector }) {
+export function Header({ context, embedded = false, onOpenTemplateSelector, isEditorReady }) {
   const { started, pending, isDirty, activeCode, handleTogglePlay, handleEvaluate, handleShuffle, handleShare } =
     context;
   const isEmbedded = typeof window !== 'undefined' && (embedded || window.location !== window.parent.location);
@@ -93,20 +93,12 @@ export function Header({ context, embedded = false, onOpenTemplateSelector }) {
           >
             {!isEmbedded && <span>update</span>}
           </button>
-          {/* !isEmbedded && (
-            <button
-              title="shuffle"
-              className="hover:opacity-50 p-2 flex items-center space-x-1"
-              onClick={handleShuffle}
-            >
-              <span> shuffle</span>
-            </button>
-          ) */}
           {!isEmbedded && (
             <button
               title="templates"
               className={cx('cursor-pointer hover:opacity-50 flex items-center space-x-1', !isEmbedded ? 'p-2' : 'px-2')}
               onClick={onOpenTemplateSelector}
+              disabled={!isEditorReady}
             >
               <span>templates</span>
             </button>
@@ -132,26 +124,6 @@ export function Header({ context, embedded = false, onOpenTemplateSelector }) {
               <span>learn</span>
             </a>
           )}
-          {/* {isEmbedded && (
-            <button className={cx('hover:opacity-50 px-2')}>
-              <a href={window.location.href} target="_blank" rel="noopener noreferrer" title="Open in REPL">
-                🚀
-              </a>
-            </button>
-          )}
-          {isEmbedded && (
-            <button className={cx('hover:opacity-50 px-2')}>
-              <a
-                onClick={() => {
-                  window.location.href = initialUrl;
-                  window.location.reload();
-                }}
-                title="Reset"
-              >
-                💔
-              </a>
-            </button>
-          )} */}
         </div>
       )}
     </header>

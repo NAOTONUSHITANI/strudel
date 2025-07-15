@@ -147,9 +147,11 @@ export function useReplContext() {
     });
 
     editorRef.current = editor;
+    setView(editor.editor);
   }, []);
 
   const [replState, setReplState] = useState({});
+  const [view, setView] = useState(null);
   const { started, isDirty, error, activeCode, pending } = replState;
   const editorRef = useRef();
   const containerRef = useRef();
@@ -229,6 +231,7 @@ export function useReplContext() {
     error,
     editorRef,
     containerRef,
+    view,
   };
   return context;
 }
