@@ -5,6 +5,8 @@ import Header from '../components/Header/Header.astro';
 import PageContent from '../components/PageContent/PageContent.astro';
 import LeftSidebar from '../components/LeftSidebar/LeftSidebar.astro';
 import RightSidebar from '../components/RightSidebar/RightSidebar.astro';
+import Chat from '../components/Chat.jsx';
+import Tutorial from '../components/Tutorial.jsx'; // チュートリアルコンポーネントをインポート
 import * as CONFIG from '../config';
 import type { MarkdownHeading } from 'astro';
 import '../docs/docs.css';
@@ -49,5 +51,26 @@ const githubEditUrl = `${CONFIG.GITHUB_EDIT_URL}/${currentFile}`;
         </div>
       </main>
     </div>
+
+    <!-- AI Chat Window -->
+    <div id="ai-chat-container" class="hidden fixed bottom-20 right-5 z-[110]">
+      <Chat client:load />
+    </div>
+
+    <!-- Tutorial Popup -->
+    <Tutorial client:load />
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const chatContainer = document.getElementById('ai-chat-container');
+        const chatButton = document.getElementById('ai-chat-button');
+
+        if (chatButton && chatContainer) {
+          chatButton.addEventListener('click', () => {
+            chatContainer.classList.toggle('hidden');
+          });
+        }
+      });
+    </script>
   </body>
 </html>

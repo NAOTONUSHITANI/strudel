@@ -40,6 +40,9 @@ const baseNoTrailing = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL
   <div class="search-item h-10">
     <Search client:idle />
   </div>
+  <button id="ai-chat-button" class="hidden md:flex cursor-pointer items-center space-x-1 mr-4">
+    <span>AI Chat</span>
+  </button>
   <a href={`${baseNoTrailing}/`} class="hidden md:flex cursor-pointer items-center space-x-1"
     ><CommandLineIcon className="w-5 h-5" /><span>go to REPL</span>
   </a>
