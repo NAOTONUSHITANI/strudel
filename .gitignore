@@ -135,3 +135,5 @@ samples/*
 
 # Local Netlify folder
 .netlify
+
+prototype-v3.html.env
