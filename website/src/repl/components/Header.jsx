@@ -7,7 +7,7 @@ import '../Repl.css';
 const { BASE_URL } = import.meta.env;
 const baseNoTrailing = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
 
-export function Header({ context, embedded = false, onOpenTemplateSelector, isEditorReady }) {
+export function Header({ context, embedded = false, onOpenTemplateSelector, isEditorReady, onToggleChat }) {
   const { started, pending, isDirty, activeCode, handleTogglePlay, handleEvaluate, handleShuffle, handleShare } =
     context;
   const isEmbedded = typeof window !== 'undefined' && (embedded || window.location !== window.parent.location);
@@ -101,6 +101,15 @@ export function Header({ context, embedded = false, onOpenTemplateSelector, isEd
               disabled={!isEditorReady}
             >
               <span>templates</span>
+            </button>
+          )}
+          {!isEmbedded && (
+            <button
+              title="AI Chat"
+              className={cx('cursor-pointer hover:opacity-50 flex items-center space-x-1', !isEmbedded ? 'p-2' : 'px-2')}
+              onClick={onToggleChat}
+            >
+              <span>AI Chat</span>
             </button>
           )}
           {!isEmbedded && (

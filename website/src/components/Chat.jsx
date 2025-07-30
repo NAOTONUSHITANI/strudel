@@ -1,20 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChatMessage } from './ChatMessage';
+import { ChatMessage } from './ChatMessage.jsx';
 
-// テキストをURLセーフなBase64文字列にエンコード
-function b64Encode(str) {
-  const base64 = btoa(unescape(encodeURIComponent(str)));
-  // URLに含めるために、'+'を'-'に、'/'を'_'に、'='を削除
-  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-}
-
-export function Chat() { // onInsertCode propを削除
+// This is a simplified version that only takes props
+export function Chat({ onInsertCode, onClose }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
-  // IME入力状態を管理するためのstate
   const [isComposing, setIsComposing] = useState(false);
+
+  // テキストをURLセーフなBase64文字列にエンコード
+  function b64Encode(str) {
+    const base64 = btoa(unescape(encodeURIComponent(str)));
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  }
 
   // 最初のメッセージを表示
   useEffect(() => {
@@ -23,15 +22,10 @@ export function Chat() { // onInsertCode propを削除
     }
   }, []);
 
-  // 新しいメッセージが追加されたら一番下までスクロール
+  // 新しいメッセーシ
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  const handleInsertCode = (code) => {
-    const event = new CustomEvent('insert-code', { detail: { code } });
-    document.dispatchEvent(event);
-  };
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -83,10 +77,17 @@ export function Chat() { // onInsertCode propを削除
 
   return (
     <div className="fixed bottom-5 right-5 w-96 h-[500px] bg-gray-900 border border-gray-700 rounded-lg shadow-2xl flex flex-col z-40">
-      <header className="p-4 border-b border-gray-700 bg-gray-800 text-gray-200 font-bold text-lg">AI Chat</header>
+      <header className="p-4 border-b border-gray-700 bg-gray-800 text-gray-200 font-bold text-lg flex justify-between items-center">
+        <span>AI Chat</span>
+        <button onClick={onClose} className="text-gray-400 hover:text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </header>
       <main className="flex-1 p-4 overflow-y-auto space-y-4">
         {messages.map((msg, index) => (
-          <ChatMessage key={index} message={msg} onInsertCode={handleInsertCode} />
+          <ChatMessage key={index} message={msg} onInsertCode={onInsertCode} />
         ))}
         {isLoading && (
           <div className="flex justify-start">

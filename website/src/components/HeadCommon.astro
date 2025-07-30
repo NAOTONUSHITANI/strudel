@@ -49,14 +49,15 @@ const baseNoTrailing = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL
 <script>
   import { initTheme, codemirrorSettings } from '@strudel/codemirror';
 
-  initTheme(codemirrorSettings.get().theme);
-
   // https://medium.com/quick-code/100vh-problem-with-ios-safari-92ab23c852a8
   const appHeight = () => {
     const doc = document.documentElement;
     doc.style.setProperty('--app-height', `${window.innerHeight - 1}px`);
   };
+
   if (typeof window !== 'undefined') {
+    // This code now only runs on the client
+    initTheme(codemirrorSettings.get().theme);
     window.addEventListener('resize', appHeight);
     appHeight();
   }

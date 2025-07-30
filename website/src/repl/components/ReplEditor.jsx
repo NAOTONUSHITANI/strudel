@@ -5,8 +5,8 @@ import { Code } from '@src/repl/components/Code';
 import UserFacingErrorMessage from '@src/repl/components/UserFacingErrorMessage';
 import { Header } from './Header';
 import { useSettings } from '@src/settings.mjs';
-import { TemplateSelector } from '@components/TemplateSelector';
-import { Chat } from '@components/Chat';
+import { TemplateSelector } from '@components/TemplateSelector.jsx';
+import { Chat } from '@components/Chat.jsx';
 
 export default function ReplEditor(Props) {
   const { context, ...editorProps } = Props;
@@ -14,20 +14,22 @@ export default function ReplEditor(Props) {
   const settings = useSettings();
   const { panelPosition, isZen } = settings;
   const [isTemplateSelectorOpen, setTemplateSelectorOpen] = useState(false);
+  const [isChatVisible, setChatVisible] = useState(false);
 
   const handleOpenTemplateSelector = () => {
     setTemplateSelectorOpen(true);
   };
 
+  const handleToggleChat = () => {
+    setChatVisible(prev => !prev);
+  };
+
   const handleInsertCode = (code) => {
-    // エディタのビューが準備できている���確認
     if (!view) {
       console.error('Editor view is not ready for insertion.');
       alert('エディタの準備ができていません。少し待ってからもう一度お試しください。');
       return;
     }
-
-    // エディタの状態を取得
     const editorView = view;
     const state = editorView.state;
     if (!state) {
@@ -35,17 +37,11 @@ export default function ReplEditor(Props) {
       alert('エディタの状態が取得できません。ページを再読み込みしてください。');
       return;
     }
-
     try {
-      // カーソル位置を取得
       const { from, to } = state.selection.main;
-      
-      // コードを挿入
       editorView.dispatch({
         changes: { from, to, insert: code },
       });
-      
-      // エディタにフォーカスを戻す
       editorView.focus();
     } catch (err) {
       console.error('Failed to insert code:', err);
@@ -61,6 +57,7 @@ export default function ReplEditor(Props) {
       <Header
         context={context}
         onOpenTemplateSelector={handleOpenTemplateSelector}
+        onToggleChat={handleToggleChat}
         isEditorReady={isEditorReady}
       />
       <div className="grow flex relative overflow-hidden">
@@ -75,8 +72,7 @@ export default function ReplEditor(Props) {
           onClose={() => setTemplateSelectorOpen(false)}
         />
       )}
-      <Chat onInsertCode={handleInsertCode} />
+      {isChatVisible && <Chat onInsertCode={handleInsertCode} onClose={() => setChatVisible(false)} />}
     </div>
   );
 }
-

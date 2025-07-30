@@ -9,40 +9,31 @@ import { nanoid } from 'nanoid';
 import { writeText } from '@tauri-apps/plugin-clipboard-manager';
 import { $featuredPatterns /* , loadDBPatterns */ } from '@src/user_pattern_utils.mjs';
 
-// Create a single supabase client for interacting with your database
+const isBrowser = typeof window !== 'undefined';
+
 export const supabase = createClient(
   'https://pidxdsxphlhzjnzmifth.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpZHhkc3hwaGxoempuem1pZnRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NTYyMzA1NTYsImV4cCI6MTk3MTgwNjU1Nn0.bqlw7802fsWRnqU5BLYtmXk_k-D1VFmbkHMywWc15NM',
 );
 
 let dbLoaded;
-/* if (typeof window !== 'undefined') {
-  dbLoaded = loadDBPatterns();
-} */
 
 export async function initCode() {
-  // load code from url hash (either short hash from database or decode long hash)
+  if (!isBrowser) return;
   try {
     const initialUrl = window.location.href;
     const hash = initialUrl.split('?')[1]?.split('#')?.[0]?.split('&')[0];
     const codeParam = window.location.href.split('#')[1] || '';
     if (codeParam) {
-      // looking like https://strudel.cc/#ImMzIGUzIg%3D%3D (hash length depends on code length)
       return hash2code(codeParam);
     } else if (hash) {
-      // looking like https://strudel.cc/?J01s5i1J0200 (fixed hash length)
       return supabase
         .from('code_v1')
         .select('code')
         .eq('hash', hash)
         .then(({ data, error }) => {
-          if (error) {
-            console.warn('failed to load hash', error);
-          }
-          if (data.length) {
-            //console.log('load hash from database', hash);
-            return data[0].code;
-          }
+          if (error) console.warn('failed to load hash', error);
+          if (data.length) return data[0].code;
         });
     }
   } catch (err) {
@@ -98,55 +89,16 @@ export function loadModules() {
 
   return evalScope(settingPatterns, ...modules);
 }
-// confirm dialog is a promise in webkit and a boolean in other browsers... normalize it to be a promise everywhere
+
 export function confirmDialog(msg) {
+  if (!isBrowser) return Promise.resolve(false);
   const confirmed = confirm(msg);
-  if (confirmed instanceof Promise) {
-    return confirmed;
-  }
-  return new Promise((resolve) => {
-    resolve(confirmed);
-  });
+  if (confirmed instanceof Promise) return confirmed;
+  return Promise.resolve(confirmed);
 }
 
-let lastShared;
-
-//RIP due to SPAM
-// export async function shareCode(codeToShare) {
-//   // const codeToShare = activeCode || code;
-//   if (lastShared === codeToShare) {
-//     logger(`Link already generated!`, 'error');
-//     return;
-//   }
-
-//   confirmDialog(
-//     'Do you want your pattern to be public? If no, press cancel and you will get just a private link.',
-//   ).then(async (isPublic) => {
-//     const hash = nanoid(12);
-//     const shareUrl = window.location.origin + window.location.pathname + '?' + hash;
-//     const { error } = await supabase.from('code_v1').insert([{ code: codeToShare, hash, ['public']: isPublic }]);
-//     if (!error) {
-//       lastShared = codeToShare;
-//       // copy shareUrl to clipboard
-//       if (isTauri()) {
-//         await writeText(shareUrl);
-//       } else {
-//         await navigator.clipboard.writeText(shareUrl);
-//       }
-//       const message = `Link copied to clipboard: ${shareUrl}`;
-//       alert(message);
-//       // alert(message);
-//       logger(message, 'highlight');
-//     } else {
-//       console.log('error', error);
-//       const message = `Error: ${error.message}`;
-//       // alert(message);
-//       logger(message);
-//     }
-//   });
-// }
-
 export async function shareCode() {
+  if (!isBrowser) return;
   try {
     const shareUrl = window.location.href;
     if (isTauri()) {
@@ -162,22 +114,6 @@ export async function shareCode() {
   }
 }
 
-export const isIframe = () => window.location !== window.parent.location;
-function isCrossOriginFrame() {
-  try {
-    return !window.top.location.hostname;
-  } catch (e) {
-    return true;
-  }
-}
-
-export const isUdels = () => {
-  if (isCrossOriginFrame()) {
-    return false;
-  }
-  return window.top?.location?.pathname.includes('udels');
-};
-
 export function setVersionDefaultsFrom(code) {
   try {
     const metadata = getMetadata(code);
@@ -187,3 +123,22 @@ export function setVersionDefaultsFrom(code) {
     console.error(err);
   }
 }
+
+// SSR-safe browser checks
+export const isIframe = () => isBrowser && window.location !== window.parent.location;
+
+function isCrossOriginFrame() {
+  if (!isBrowser) return false;
+  try {
+    return !window.top.location.hostname;
+  } catch (e) {
+    return true;
+  }
+}
+
+export const isUdels = () => {
+  if (!isBrowser || isCrossOriginFrame()) {
+    return false;
+  }
+  return window.top?.location?.pathname.includes('udels');
+};
