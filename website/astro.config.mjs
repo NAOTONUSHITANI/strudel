@@ -6,7 +6,7 @@ import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeUrls from 'rehype-urls';
 import bundleAudioWorkletPlugin from 'vite-plugin-bundle-audioworklet';
-import node from '@astrojs/node';
+import netlify from '@astrojs/netlify';
 import tailwind from '@astrojs/tailwind';
 // import AstroPWA from '@vite-pwa/astro';
 
@@ -60,9 +60,7 @@ const options = {
 // https://astro.build/config
 export default defineConfig({
   output: 'server',
-  adapter: node({
-    mode: 'standalone',
-  }),
+  adapter: netlify(),
   integrations: [
     react(),
     mdx(options),
