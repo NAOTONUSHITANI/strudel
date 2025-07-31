@@ -1,10 +1,18 @@
 // website/src/pages/api/chat/[data].js
 
+import { promises as fs } from 'fs';
+import path from 'path';
+
 // OpenAIライブラリの代わりに、標準のfetchを使用します。
 // これにより、ライブラリの非互換性問題を完全に回避します。
 
 export async function GET({ params }) {
   try {
+    // 0. システムプロンプトをファイルから読み込む
+    // AstroのAPIルートでは、process.cwd()は既に 'website' ディレクトリを指している
+    const promptPath = path.join(process.cwd(), 'system_prompt.txt');
+    const systemPrompt = await fs.readFile(promptPath, 'utf-8');
+
     // 1. APIキーの検証
     const apiKey = import.meta.env.OPENAI_API_KEY;
     if (!apiKey) {
@@ -36,11 +44,7 @@ export async function GET({ params }) {
         messages: [
           {
             role: 'system',
-            content: `You are a helpful assistant for Strudel, a music live coding environment based on TidalCycles and JavaScript. Your name is "Strudel AI". Your goal is to help users create music with Strudel. Provide concise and helpful code examples when appropriate. All code examples must be enclosed in triple backticks. For example:
-\`\`\`javascript
-s("bd*4")
-\`\`\`
-`,
+            content: systemPrompt,
           },
           ...messages,
         ],
@@ -64,7 +68,7 @@ s("bd*4")
     // 5. 成功レスポンスをクライアントに送信
     return new Response(JSON.stringify({ response: responseContent }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
     });
 
   } catch (error) {
@@ -75,7 +79,7 @@ s("bd*4")
       details: { message: error.message }
     }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
     });
   }
 }

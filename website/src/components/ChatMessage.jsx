@@ -10,12 +10,13 @@ hljs.registerLanguage('javascript', javascript);
 
 // メッセージのテキストを解析し、テキストとコードのパーツに分割する
 function parseMessageContent(content) {
+  console.log('RAW AI CONTENT:', JSON.stringify(content));
   const parts = [];
   if (!content) return parts;
 
   try {
     let lastIndex = 0;
-    const regex = /```(\w*)\r?\n([\s\S]*?)```/g;
+    const regex = /```([^\r\n]*)\r?\n([\s\S]*?)```/g;
     let match;
 
     while ((match = regex.exec(content)) !== null) {

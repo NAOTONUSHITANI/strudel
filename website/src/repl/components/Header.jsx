@@ -109,7 +109,7 @@ export function Header({ context, embedded = false, onOpenTemplateSelector, isEd
               className={cx('cursor-pointer hover:opacity-50 flex items-center space-x-1', !isEmbedded ? 'p-2' : 'px-2')}
               onClick={onToggleChat}
             >
-              <span>AI Chat</span>
+              <span className="text-cyan-400">AI Chat</span>
             </button>
           )}
           {!isEmbedded && (

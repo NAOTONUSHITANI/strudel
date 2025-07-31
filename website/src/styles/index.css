@@ -1,69 +1,37 @@
-@font-face {
-  font-family: 'PressStart';
-  src: url('/fonts/PressStart2P/PressStart2P-Regular.ttf');
-  size-adjust: 65%;
-}
-@font-face {
-  font-family: 'BigBlueTerminal';
-  src: url('/fonts/BigBlueTerminal/BigBlue_TerminalPlus.TTF');
-}
-@font-face {
-  font-family: 'x3270';
-  src: url('/fonts/3270/3270-Regular.ttf');
-}
-@font-face {
-  font-family: 'galactico';
-  src: url('/fonts/galactico/Galactico-Basic.otf');
-}
-@font-face {
-  font-family: 'CutiePi';
-  src: url('/fonts/CutiePi/Cute_Aurora_demo.ttf');
-  size-adjust: 120%;
-}
-@font-face {
-  font-family: 'JetBrains';
-  src: url('/fonts/JetBrains/JetBrainsMono.woff2');
-}
-@font-face {
-  font-family: 'Monocraft';
-  src: url('/fonts/Monocraft/Monocraft.ttf');
-  size-adjust: 90%;
-}
-@font-face {
-  font-family: 'Hack';
-  src: url('/fonts/Hack/Hack-Regular.ttf');
-}
-@font-face {
-  font-family: 'we-come-in-peace';
-  src: url('/fonts/we-come-in-peace/we-come-in-peace-bb.regular.ttf');
-}
-@font-face {
-  font-family: 'FiraCode';
-  src: url('/fonts/FiraCode/FiraCode-Regular.ttf');
-}
-@font-face {
-  font-family: 'FiraCode-SemiBold';
-  src: url('/fonts/FiraCode/FiraCode-SemiBold.ttf');
-}
-@font-face {
-  font-family: 'teletext';
-  src: url('/fonts/teletext/EuropeanTeletext.ttf');
-  size-adjust: 90%;
-}
-@font-face {
-  font-family: 'mode7';
-  src: url('/fonts/mode7/MODE7GX3.TTF');
-  size-adjust: 82%;
+/* Hide the Astro Dev Toolbar */
+astro-dev-toolbar {
+  display: none !important;
 }
 
-.prose > h1:not(:first-child) {
-  margin-top: 30px;
-}
-:root {
-  --app-height: 100vh;
-  --app-width: 100vw;
+/* AI Chat Loading Animation */
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
-#console-tab {
-  font-family: BigBlueTerminal, monospace;
+.typing-indicator span {
+  width: 8px;
+  height: 8px;
+  background-color: #9ca3af; /* gray-400 */
+  border-radius: 50%;
+  animation: wave 1.4s infinite ease-in-out both;
+}
+
+.typing-indicator span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes wave {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1.0);
+  }
 }
