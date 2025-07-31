@@ -4,7 +4,7 @@
   publish = "dist"
 
 [functions]
-  directory = "website/.netlify/functions"
+  directory = "/opt/build/repo/website/.netlify/functions"
 
 [[redirects]]
   from = "/*"
