@@ -1,0 +1,12 @@
+[build]
+  base = "website"
+  command = "pnpm build"
+  publish = "website/dist"
+
+[functions]
+  directory = "website/.netlify/functions"
+
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/___netlify-handler"
+  status = 200
