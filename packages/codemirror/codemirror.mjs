@@ -40,7 +40,7 @@ const highlightTheme = EditorView.baseTheme({
   },
 });
 
-const highlightField = StateField.define({
+export const highlightField = StateField.define({
   create() {
     return Decoration.none;
   },
@@ -48,14 +48,9 @@ const highlightField = StateField.define({
     highlights = highlights.map(tr.changes);
     for (let e of tr.effects) {
       if (e.is(addHighlight)) {
-        const fromLine = tr.state.doc.lineAt(e.value.from).number;
-        const toLine = tr.state.doc.lineAt(e.value.to).number;
-        const decorations = [];
-        for (let i = fromLine; i <= toLine; i++) {
-          const line = tr.state.doc.line(i);
-          decorations.push(Decoration.line({ class: 'cm-ai-generated' }).range(line.from));
-        }
-        highlights = highlights.update({ add: decorations });
+        highlights = highlights.update({
+          add: [Decoration.mark({ class: 'cm-ai-generated' }).range(e.value.from, e.value.to)],
+        });
       }
     }
     return highlights;
@@ -146,7 +141,11 @@ export function initEditor({ initialCode = '', onChange, onEvaluate, onStop, roo
       highlightField,
       highlightTheme,
       history(),
-      EditorView.updateListener.of((v) => onChange(v)),
+      EditorView.updateListener.of((v) => {
+        // Fire a custom event for React components to listen to
+        v.view.dom.dispatchEvent(new CustomEvent('cm-update', { detail: v }));
+        onChange(v);
+      }),
       drawSelection({ cursorBlinkRate: 0 }),
       Prec.highest(
         keymap.of([
