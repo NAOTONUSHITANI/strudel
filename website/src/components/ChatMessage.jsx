@@ -10,7 +10,6 @@ hljs.registerLanguage('javascript', javascript);
 
 // メッセージのテキストを解析し、テキストとコードのパーツに分割する
 function parseMessageContent(content) {
-  console.log('RAW AI CONTENT:', JSON.stringify(content));
   const parts = [];
   if (!content) return parts;
 
@@ -101,7 +100,7 @@ export function ChatMessage({ message, onInsertCode }) {
   return (
     <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
       <div
-        className={`max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl break-words whitespace-pre-wrap rounded-lg px-4 py-2 ${
+        className={`overflow-x-hidden max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl break-words whitespace-pre-wrap rounded-lg px-4 py-2 ${
           message.role === 'user' ? 'bg-gray-600 text-white' : 'bg-gray-700 text-gray-200'
         }`}
       >

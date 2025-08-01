@@ -1,9 +1,25 @@
 import { useState, useEffect, useRef } from 'react';
 import { ChatMessage } from './ChatMessage.jsx';
+import { ArrowPathIcon } from '@heroicons/react/20/solid';
+
+const CHAT_HISTORY_KEY = 'strudel-chat-history';
+const INITIAL_MESSAGE = { role: 'assistant', content: 'こんにちは！Strudelで何を作りますか？' };
 
 // This is a simplified version that only takes props
 export function Chat({ onInsertCode, onClose }) {
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(() => {
+    try {
+      const savedHistory = localStorage.getItem(CHAT_HISTORY_KEY);
+      if (savedHistory) {
+        const parsedHistory = JSON.parse(savedHistory);
+        return parsedHistory.length > 0 ? parsedHistory : [INITIAL_MESSAGE];
+      }
+    } catch (error) {
+      console.error('Failed to load chat history:', error);
+    }
+    return [INITIAL_MESSAGE];
+  });
+
   const [input, setInput] = useState('');
   const [isLoading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
@@ -15,17 +31,26 @@ export function Chat({ onInsertCode, onClose }) {
     return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
   }
 
-  // 最初のメッセージを表示
-  useEffect(() => {
-    if (messages.length === 0) {
-      setMessages([{ role: 'assistant', content: 'こんにちは！Strudelで何を作りますか？' }]);
-    }
-  }, []);
-
-  // 新しいメッセーシ
+  // 新しいメッセージで自動スクロール
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // 会話履歴をlocalStorageに保存
+  useEffect(() => {
+    try {
+      if (messages.length > 1 || (messages.length === 1 && messages[0].content !== INITIAL_MESSAGE.content)) {
+        localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(messages));
+      }
+    } catch (error) {
+      console.error('Failed to save chat history:', error);
+    }
+  }, [messages]);
+
+  const handleReset = () => {
+    localStorage.removeItem(CHAT_HISTORY_KEY);
+    setMessages([INITIAL_MESSAGE]);
+  };
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -36,7 +61,7 @@ export function Chat({ onInsertCode, onClose }) {
     setInput('');
     setLoading(true);
 
-    const messagesForApi = newMessages;
+    const messagesForApi = newMessages.filter(msg => msg.content !== INITIAL_MESSAGE.content);
     const requestPayload = JSON.stringify({ messages: messagesForApi });
     const encodedData = b64Encode(requestPayload);
 
@@ -76,14 +101,19 @@ export function Chat({ onInsertCode, onClose }) {
   };
 
   return (
-    <div className="fixed bottom-5 right-5 w-96 h-[500px] bg-gray-900 border border-gray-700 rounded-lg shadow-2xl flex flex-col z-40">
+    <div className="fixed bottom-5 right-5 w-[30rem] h-[600px] bg-gray-900 border border-gray-700 rounded-lg shadow-2xl flex flex-col z-40">
       <header className="p-4 border-b border-gray-700 bg-gray-800 text-gray-200 font-bold text-lg flex justify-between items-center">
         <span>AI Chat</span>
-        <button onClick={onClose} className="text-gray-400 hover:text-white">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={handleReset} className="text-gray-400 hover:text-white" title="Reset conversation">
+            <ArrowPathIcon className="h-5 w-5" />
+          </button>
+          <button onClick={onClose} className="text-gray-400 hover:text-white" title="Close chat">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
       </header>
       <main className="flex-1 p-4 overflow-y-auto space-y-4">
         {messages.map((msg, index) => (

@@ -3,8 +3,14 @@ export { toggleComment, toggleBlockComment, toggleLineComment, toggleBlockCommen
 // import { search, highlightSelectionMatches } from '@codemirror/search';
 import { history, indentWithTab } from '@codemirror/commands';
 import { javascript } from '@codemirror/lang-javascript';
-import { defaultHighlightStyle, syntaxHighlighting, bracketMatching } from '@codemirror/language';
-import { Compartment, EditorState, Prec } from '@codemirror/state';
+import {
+  defaultHighlightStyle,
+  syntaxHighlighting,
+  bracketMatching,
+  HighlightStyle,
+} from '@codemirror/language';
+import { tags } from '@lezer/highlight';
+import { Compartment, EditorState, Prec, StateField, StateEffect } from '@codemirror/state';
 import {
   EditorView,
   highlightActiveLineGutter,
@@ -12,6 +18,7 @@ import {
   keymap,
   lineNumbers,
   drawSelection,
+  Decoration,
 } from '@codemirror/view';
 import { repl, registerControl } from '@strudel/core';
 import { Drawer, cleanupDraw } from '@strudel/draw';
@@ -24,6 +31,37 @@ import { initTheme, activateTheme, theme } from './themes.mjs';
 import { sliderPlugin, updateSliderWidgets } from './slider.mjs';
 import { widgetPlugin, updateWidgets } from './widget.mjs';
 import { persistentAtom } from '@nanostores/persistent';
+
+export const addHighlight = StateEffect.define();
+
+const highlightTheme = EditorView.baseTheme({
+  '.cm-ai-generated': {
+    filter: 'hue-rotate(180deg)', // Rotate the hue to change colors while preserving syntax highlighting
+  },
+});
+
+const highlightField = StateField.define({
+  create() {
+    return Decoration.none;
+  },
+  update(highlights, tr) {
+    highlights = highlights.map(tr.changes);
+    for (let e of tr.effects) {
+      if (e.is(addHighlight)) {
+        const fromLine = tr.state.doc.lineAt(e.value.from).number;
+        const toLine = tr.state.doc.lineAt(e.value.to).number;
+        const decorations = [];
+        for (let i = fromLine; i <= toLine; i++) {
+          const line = tr.state.doc.line(i);
+          decorations.push(Decoration.line({ class: 'cm-ai-generated' }).range(line.from));
+        }
+        highlights = highlights.update({ add: decorations });
+      }
+    }
+    return highlights;
+  },
+  provide: (f) => EditorView.decorations.from(f),
+});
 
 const extensions = {
   isLineWrappingEnabled: (on) => (on ? EditorView.lineWrapping : []),
@@ -71,6 +109,23 @@ export const codemirrorSettings = persistentAtom('codemirror-settings', defaultS
   decode: JSON.parse,
 });
 
+const customHighlightStyle = HighlightStyle.define([
+  { tag: tags.keyword, color: 'var(--keyword)' },
+  { tag: tags.atom, color: 'var(--atom)' },
+  { tag: tags.number, color: 'var(--number)' },
+  { tag: tags.string, color: 'var(--string)' },
+  { tag: tags.lineComment, color: 'var(--comment)' },
+  { tag: tags.blockComment, color: 'var(--comment)' },
+  { tag: tags.invalid, color: 'var(--invalid)' },
+  { tag: tags.function(tags.variableName), color: 'var(--variableName)' },
+  { tag: tags.operator, color: 'var(--operator)' },
+  { tag: tags.separator, color: 'var(--separator)' },
+  { tag: tags.controlKeyword, color: 'var(--controlKeyword)' },
+  { tag: tags.punctuation, color: 'var(--punctuation)' },
+  { tag: tags.regexp, color: 'var(--regexp)' },
+  { tag: tags.propertyName, color: 'var(--propertyName)' },
+]);
+
 // https://codemirror.net/docs/guide/
 export function initEditor({ initialCode = '', onChange, onEvaluate, onStop, root, mondo }) {
   const settings = codemirrorSettings.get();
@@ -88,9 +143,8 @@ export function initEditor({ initialCode = '', onChange, onEvaluate, onStop, roo
       mondo ? [] : javascript(),
       sliderPlugin,
       widgetPlugin,
-      // indentOnInput(), // works without. already brought with javascript extension?
-      // bracketMatching(), // does not do anything
-      syntaxHighlighting(defaultHighlightStyle),
+      highlightField,
+      highlightTheme,
       history(),
       EditorView.updateListener.of((v) => onChange(v)),
       drawSelection({ cursorBlinkRate: 0 }),

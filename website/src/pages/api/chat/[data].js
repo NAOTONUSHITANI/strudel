@@ -2,21 +2,22 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
+import dotenv from 'dotenv';
 
-// OpenAIライブラリの代わりに、標準のfetchを使用します。
-// これにより、ライブラリの非互換性問題を完全に回避します。
+// Manually load environment variables from the root .env file
+// The path goes up one level from /website to the project root.
+dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 
 export async function GET({ params }) {
   try {
     // 0. システムプロンプトをファイルから読み込む
-    // AstroのAPIルートでは、process.cwd()は既に 'website' ディレクトリを指している
     const promptPath = path.join(process.cwd(), 'system_prompt.txt');
     const systemPrompt = await fs.readFile(promptPath, 'utf-8');
 
     // 1. APIキーの検証
-    const apiKey = import.meta.env.OPENAI_API_KEY;
+    const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      throw new Error('環境変数 OPENAI_API_KEY がサーバーに設定されていません。');
+      throw new Error('サーバー側でAPIキーが設定されていません。');
     }
 
     // 2. リクエストデータの処理
@@ -72,8 +73,7 @@ export async function GET({ params }) {
     });
 
   } catch (error) {
-    // 最終的なエラーハンドリング
-    console.error('Critical API Error:', error);
+    console.error('[API CRITICAL ERROR]', error.message);
     return new Response(JSON.stringify({
       error: 'サーバーで重大なエラーが発生しました。',
       details: { message: error.message }

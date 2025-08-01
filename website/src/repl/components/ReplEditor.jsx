@@ -1,3 +1,4 @@
+import { addHighlight } from '@strudel/codemirror/codemirror.mjs';
 import { useState } from 'react';
 import Loader from '@src/repl/components/Loader';
 import { HorizontalPanel, VerticalPanel } from '@src/repl/components/panel/Panel';
@@ -39,8 +40,12 @@ export default function ReplEditor(Props) {
     }
     try {
       const { from, to } = state.selection.main;
+      const insertFrom = from;
+      const insertTo = from + code.length;
+
       editorView.dispatch({
         changes: { from, to, insert: code },
+        effects: addHighlight.of({ from: insertFrom, to: insertTo }),
       });
       editorView.focus();
     } catch (err) {
