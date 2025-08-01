@@ -94,9 +94,8 @@ function CodeBlock({ language, code, onInsertCode }) {
   );
 }
 
-export function ChatMessage({ message, onInsertCode }) {
-  const parts = parseMessageContent(message.content);
-
+export function ChatMessage({ message, onInsertCode, isLoading }) {
+  // The content parsing is now performed conditionally inside the return statement.
   return (
     <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
       <div
@@ -104,26 +103,33 @@ export function ChatMessage({ message, onInsertCode }) {
           message.role === 'user' ? 'bg-gray-600 text-white' : 'bg-gray-700 text-gray-200'
         }`}
       >
-        {parts.map((part, index) => {
-          if (part.type === 'code' && part.value) {
+        {isLoading && !message.content ? (
+          <div className="typing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        ) : (
+          parseMessageContent(message.content).map((part, index) => {
+            if (part.type === 'code' && part.value) {
+              return (
+                <CodeBlock
+                  key={index}
+                  language={part.language}
+                  code={part.value}
+                  onInsertCode={onInsertCode}
+                />
+              );
+            }
             return (
-              <CodeBlock
-                key={index}
-                language={part.language}
-                code={part.value}
-                onInsertCode={onInsertCode}
-              />
+              <div key={index} className="prose prose-invert prose-sm max-w-none">
+                <ReactMarkdown>
+                  {part.value}
+                </ReactMarkdown>
+              </div>
             );
-          }
-          // Markdownをレンダリング
-          return (
-            <div key={index} className="prose prose-invert prose-sm max-w-none">
-              <ReactMarkdown>
-                {part.value}
-              </ReactMarkdown>
-            </div>
-          );
-        })}
+          })
+        )}
       </div>
     </div>
   );

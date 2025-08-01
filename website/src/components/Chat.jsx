@@ -120,45 +120,54 @@ export function Chat({ onInsertCode, onClose }) {
     if (!input.trim()) return;
 
     const userMessage = { role: 'user', content: input.trim() };
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
+    // Add user message and a placeholder for the assistant's response
+    setMessages(prev => [...prev, userMessage, { role: 'assistant', content: '' }]);
+    const currentInput = input;
     setInput('');
     setLoading(true);
 
-    const messagesForApi = newMessages.filter(msg => msg.content !== INITIAL_MESSAGE.content);
-    const requestPayload = JSON.stringify({ messages: messagesForApi });
-    const encodedData = b64Encode(requestPayload);
-
-    const url = `/api/chat/${encodedData}`;
-
     try {
-      const response = await fetch(url, {
-        method: 'GET',
-      });
+      const messagesForApi = [...messages, userMessage].filter(msg => msg.content !== INITIAL_MESSAGE.content);
+      const requestPayload = JSON.stringify({ messages: messagesForApi });
+      const encodedData = b64Encode(requestPayload);
+      const url = `/api/chat/${encodedData}`;
+
+      const response = await fetch(url);
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({
-          error: '不明なエラーが発生しました',
-          details: { message: response.statusText }
-        }));
-        const message = errorData?.error || `APIエラー: ${response.status}`;
-        const details = errorData?.details ? `\n詳細: ${JSON.stringify(errorData.details, null, 2)}` : '';
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { error: 'Unknown server error', details: { message: errorText } };
+        }
+        const message = errorData?.error || `API Error: ${response.status}`;
+        const details = errorData?.details ? `\nDetails: ${JSON.stringify(errorData.details, null, 2)}` : '';
         throw new Error(`${message}${details}`);
       }
 
-      const data = await response.json();
-      
-      if (!data || !data.response) {
-        throw new Error('サーバーからの応答が不正です');
-      }
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
 
-      const aiMessage = { role: 'assistant', content: data.response };
-      setMessages((prev) => [...prev, aiMessage]);
+      while (!done) {
+        const { value, done: readerDone } = await reader.read();
+        done = readerDone;
+        const chunk = decoder.decode(value, { stream: !done });
+        
+        setMessages((prev) => {
+          const lastMessage = prev[prev.length - 1];
+          const updatedLastMessage = { ...lastMessage, content: lastMessage.content + chunk };
+          return [...prev.slice(0, -1), updatedLastMessage];
+        });
+      }
 
     } catch (error) {
       console.error('Chat error:', error);
-      const errorMessage = { role: 'assistant', content: `エラーが発生しました: ${error.message}` };
-      setMessages((prev) => [...prev, errorMessage]);
+      const errorMessage = { role: 'assistant', content: `Error: ${error.message}` };
+      // Replace the placeholder with the error message
+      setMessages((prev) => [...prev.slice(0, -1), errorMessage]);
     } finally {
       setLoading(false);
     }
@@ -190,19 +199,13 @@ export function Chat({ onInsertCode, onClose }) {
       </header>
       <main className="flex-1 p-4 overflow-y-auto space-y-4">
         {messages.map((msg, index) => (
-          <ChatMessage key={index} message={msg} onInsertCode={onInsertCode} />
+          <ChatMessage
+            key={index}
+            message={msg}
+            onInsertCode={onInsertCode}
+            isLoading={isLoading && index === messages.length - 1}
+          />
         ))}
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-gray-700 rounded-lg px-4 py-2">
-              <div className="typing-indicator">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-            </div>
-          </div>
-        )}
         <div ref={messagesEndRef} />
       </main>
       <footer className="p-4 border-t border-gray-700 bg-gray-800 flex-shrink-0">
