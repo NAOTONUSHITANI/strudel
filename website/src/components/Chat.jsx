@@ -118,47 +118,62 @@ export function Chat({ onInsertCode, onClose }) {
 
   const handleSend = async () => {
     if (!input.trim()) return;
-
+  
     const userMessage = { role: 'user', content: input.trim() };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInput('');
     setLoading(true);
-
+  
+    // Add a placeholder for the assistant's response
+    setMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
+  
     const messagesForApi = newMessages.filter(msg => msg.content !== INITIAL_MESSAGE.content);
     const requestPayload = JSON.stringify({ messages: messagesForApi });
     const encodedData = b64Encode(requestPayload);
-
+  
     const url = `/api/chat/${encodedData}`;
-
+  
     try {
-      const response = await fetch(url, {
-        method: 'GET',
-      });
-
+      const response = await fetch(url);
+  
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({
-          error: '不明なエラーが発生しました',
-          details: { message: response.statusText }
-        }));
-        const message = errorData?.error || `APIエラー: ${response.status}`;
-        const details = errorData?.details ? `\n詳細: ${JSON.stringify(errorData.details, null, 2)}` : '';
-        throw new Error(`${message}${details}`);
+        const errorText = await response.text();
+        throw new Error(`APIエラー: ${response.status} ${errorText}`);
       }
-
-      const data = await response.json();
-      
-      if (!data || !data.response) {
-        throw new Error('サーバーからの応答が不正です');
+  
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+  
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+  
+        const chunk = decoder.decode(value, { stream: true });
+        
+        setMessages((prev) => {
+          const updatedMessages = [...prev];
+          const lastMessage = updatedMessages[updatedMessages.length - 1];
+          if (lastMessage.role === 'assistant') {
+            lastMessage.content += chunk;
+          }
+          return updatedMessages;
+        });
       }
-
-      const aiMessage = { role: 'assistant', content: data.response };
-      setMessages((prev) => [...prev, aiMessage]);
-
+  
     } catch (error) {
       console.error('Chat error:', error);
-      const errorMessage = { role: 'assistant', content: `エラーが発生しました: ${error.message}` };
-      setMessages((prev) => [...prev, errorMessage]);
+      setMessages((prev) => {
+        const updatedMessages = [...prev];
+        const lastMessage = updatedMessages[updatedMessages.length - 1];
+        if (lastMessage.role === 'assistant' && lastMessage.content === '') {
+          lastMessage.content = `エラーが発生しました: ${error.message}`;
+        } else {
+          // If there's no placeholder, add a new error message
+          updatedMessages.push({ role: 'assistant', content: `エラーが発生しました: ${error.message}` });
+        }
+        return updatedMessages;
+      });
     } finally {
       setLoading(false);
     }
@@ -191,11 +206,16 @@ export function Chat({ onInsertCode, onClose }) {
       <main className="flex-1 p-4 overflow-y-auto space-y-4">
         {messages.map((msg, index) => {
           const prevMsg = index > 0 ? messages[index - 1] : null;
-          // Show separator when an assistant message follows a user message
           const showSeparator =
             prevMsg &&
             prevMsg.role === 'user' &&
             msg.role === 'assistant';
+
+          // While loading, if this is the last message and it's an empty assistant placeholder,
+          // don't render it. The loading indicator will be shown instead.
+          if (isLoading && index === messages.length - 1 && msg.role === 'assistant' && msg.content === '') {
+            return null; // Prevents the empty bubble from appearing
+          }
 
           return (
             <React.Fragment key={index}>
@@ -204,7 +224,8 @@ export function Chat({ onInsertCode, onClose }) {
             </React.Fragment>
           );
         })}
-        {isLoading && (
+        {/* The loading indicator is now shown without a duplicate empty bubble. */}
+        {isLoading && messages.length > 0 && messages[messages.length - 1]?.role === 'assistant' && messages[messages.length - 1]?.content === '' && (
           <div className="flex justify-start">
             <div className="bg-gray-700 rounded-lg px-4 py-2">
               <div className="typing-indicator">

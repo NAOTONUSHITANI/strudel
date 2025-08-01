@@ -5,7 +5,6 @@ import path from 'path';
 import dotenv from 'dotenv';
 
 // Manually load environment variables from the root .env file
-// The path goes up one level from /website to the project root.
 dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 
 export async function GET({ params }) {
@@ -33,7 +32,7 @@ export async function GET({ params }) {
       return new Response(JSON.stringify({ error: 'Invalid messages format' }), { status: 400 });
     }
 
-    // 3. fetchを使用してOpenAI APIを直接呼び出す
+    // 3. fetchを使用してOpenAI APIをストリーミングモードで呼び出す
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -49,6 +48,7 @@ export async function GET({ params }) {
           },
           ...messages,
         ],
+        stream: true, // ストリーミングを有効化
       }),
     });
 
@@ -59,17 +59,55 @@ export async function GET({ params }) {
       throw new Error(`OpenAI API returned an error: ${errorData.error?.message || openAIResponse.statusText}`);
     }
 
-    const completion = await openAIResponse.json();
-    const responseContent = completion.choices[0]?.message?.content;
+    // 5. レスポンスをクライアントにストリーミングする
+    const stream = new ReadableStream({
+      async start(controller) {
+        const reader = openAIResponse.body.getReader();
+        const decoder = new TextDecoder('utf-8');
 
-    if (!responseContent) {
-      throw new Error('Invalid response structure from OpenAI API.');
-    }
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-    // 5. 成功レスポンスをクライアントに送信
-    return new Response(JSON.stringify({ response: responseContent }), {
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n').filter(line => line.trim() !== '');
+
+            for (const line of lines) {
+              if (line === 'data: [DONE]') {
+                controller.close();
+                return;
+              }
+              if (line.startsWith('data: ')) {
+                const jsonStr = line.substring(6);
+                try {
+                  const parsed = JSON.parse(jsonStr);
+                  const content = parsed.choices[0]?.delta?.content;
+                  if (content) {
+                    controller.enqueue(new TextEncoder().encode(content));
+                  }
+                } catch (e) {
+                  console.error('Error parsing stream chunk:', e);
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Stream reading error:', error);
+          controller.error(error);
+        } finally {
+          reader.releaseLock();
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(stream, {
       status: 200,
-      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'X-Content-Type-Options': 'nosniff',
+      },
     });
 
   } catch (error) {
