@@ -4,8 +4,9 @@ import { ArrowPathIcon } from '@heroicons/react/20/solid';
 
 const CHAT_HISTORY_KEY = 'strudel-chat-history';
 const INITIAL_MESSAGE = { role: 'assistant', content: 'こんにちは！Strudelで何を作りますか？' };
+const MIN_WIDTH = 300; // Minimum width in pixels
+const MIN_HEIGHT = 200; // Minimum height in pixels
 
-// This is a simplified version that only takes props
 export function Chat({ onInsertCode, onClose }) {
   const [messages, setMessages] = useState(() => {
     try {
@@ -24,6 +25,69 @@ export function Chat({ onInsertCode, onClose }) {
   const [isLoading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const [isComposing, setIsComposing] = useState(false);
+  const [size, setSize] = useState({ width: 480, height: 600 }); // Default: 30rem = 480px
+
+  // Resize handler logic
+  useEffect(() => {
+    const chatWindow = document.getElementById('chat-window');
+    if (!chatWindow) return;
+
+    const onMouseDown = (e, direction) => {
+      e.preventDefault();
+      const startSize = size;
+      const startPos = { x: e.clientX, y: e.clientY };
+
+      const onMouseMove = (moveEvent) => {
+        const deltaX = moveEvent.clientX - startPos.x;
+        const deltaY = moveEvent.clientY - startPos.y;
+        let newWidth = startSize.width;
+        let newHeight = startSize.height;
+
+        if (direction.includes('left')) {
+          newWidth = startSize.width - deltaX;
+        }
+        if (direction.includes('top')) {
+          newHeight = startSize.height - deltaY;
+        }
+
+        setSize({
+          width: Math.max(MIN_WIDTH, newWidth),
+          height: Math.max(MIN_HEIGHT, newHeight),
+        });
+      };
+
+      const onMouseUp = () => {
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+      };
+
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    };
+
+    const handles = [
+      { element: chatWindow.querySelector('.resize-handle-l'), direction: 'left' },
+      { element: chatWindow.querySelector('.resize-handle-t'), direction: 'top' },
+      { element: chatWindow.querySelector('.resize-handle-tl'), direction: 'top-left' },
+    ];
+
+    const mouseDownListeners = [];
+
+    handles.forEach(({ element, direction }) => {
+      if (element) {
+        const listener = (e) => onMouseDown(e, direction);
+        element.addEventListener('mousedown', listener);
+        mouseDownListeners.push({ element, listener });
+      }
+    });
+
+    return () => {
+      mouseDownListeners.forEach(({ element, listener }) => {
+        element.removeEventListener('mousedown', listener);
+      });
+    };
+  }, [size]);
+
 
   // テキストをURLセーフなBase64文字列にエンコード
   function b64Encode(str) {
@@ -101,8 +165,17 @@ export function Chat({ onInsertCode, onClose }) {
   };
 
   return (
-    <div className="fixed bottom-5 right-5 w-[30rem] h-[600px] bg-gray-900 border border-gray-700 rounded-lg shadow-2xl flex flex-col z-40">
-      <header className="p-4 border-b border-gray-700 bg-gray-800 text-gray-200 font-bold text-lg flex justify-between items-center">
+    <div
+      id="chat-window"
+      className="fixed bottom-5 right-5 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl flex flex-col z-40"
+      style={{ width: `${size.width}px`, height: `${size.height}px` }}
+    >
+      {/* Resize Handles */}
+      <div className="resize-handle-t absolute top-0 left-0 w-full h-2 cursor-ns-resize"></div>
+      <div className="resize-handle-l absolute top-0 left-0 w-2 h-full cursor-ew-resize"></div>
+      <div className="resize-handle-tl absolute top-0 left-0 w-3 h-3 cursor-nwse-resize"></div>
+
+      <header className="p-4 border-b border-gray-700 bg-gray-800 text-gray-200 font-bold text-lg flex justify-between items-center flex-shrink-0">
         <span>AI Chat</span>
         <div className="flex items-center gap-2">
           <button onClick={handleReset} className="text-gray-400 hover:text-white" title="Reset conversation">
@@ -132,7 +205,7 @@ export function Chat({ onInsertCode, onClose }) {
         )}
         <div ref={messagesEndRef} />
       </main>
-      <footer className="p-4 border-t border-gray-700 bg-gray-800">
+      <footer className="p-4 border-t border-gray-700 bg-gray-800 flex-shrink-0">
         <div className="flex gap-2">
           <input
             type="text"
