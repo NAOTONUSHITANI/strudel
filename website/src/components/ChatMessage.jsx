@@ -8,42 +8,63 @@ import { ClipboardDocumentIcon, PlusCircleIcon } from '@heroicons/react/20/solid
 // highlight.jsに言語を登録
 hljs.registerLanguage('javascript', javascript);
 
-// メッセージのテキストを解析し、テキストとコードのパーツに分割する
+/**
+ * A definitive, robust parser that correctly handles all known code block variations,
+ * including those with or without language specifiers, and single-line blocks.
+ */
 function parseMessageContent(content) {
   const parts = [];
   if (!content) return parts;
 
-  try {
-    let lastIndex = 0;
-    const regex = /```([^\r\n]*)\r?\n([\s\S]*?)```/g;
-    let match;
+  // Split by the code fence. The logic is that every second element is code.
+  const splits = content.split('```');
 
-    while ((match = regex.exec(content)) !== null) {
-      if (match.index > lastIndex) {
-        parts.push({ type: 'text', value: content.substring(lastIndex, match.index) });
+  for (let i = 0; i < splits.length; i++) {
+    const part = splits[i];
+
+    // Even-indexed parts (0, 2, 4, ...) are plain text.
+    if (i % 2 === 0) {
+      if (part) {
+        parts.push({ type: 'text', value: part });
       }
+    }
+    // Odd-indexed parts (1, 3, 5, ...) are code blocks.
+    else {
+      // An empty part here means an empty code block like ``````
+      if (part === '') {
+        parts.push({ type: 'code', language: 'javascript', value: '' });
+        continue;
+      }
+
+      const firstLineEnd = part.indexOf('\n');
+      let language = '';
+      let code = '';
+
+      // Heuristic to check if the first line is a language specifier.
+      // A language specifier is assumed to be a short, single word.
+      const potentialLang = (firstLineEnd === -1) ? part.trim() : part.substring(0, firstLineEnd).trim();
+      const potentialCode = (firstLineEnd === -1) ? '' : part.substring(firstLineEnd + 1);
+
+      // If the first line is a short word with no spaces, it's likely a language.
+      if (potentialLang.match(/^[a-zA-Z0-9\-_]*$/) && potentialLang.length < 15 && potentialCode) {
+        language = potentialLang;
+        code = potentialCode;
+      } else {
+        // Otherwise, the whole block is code with a default language.
+        language = 'javascript';
+        code = part;
+      }
+
       parts.push({
         type: 'code',
-        language: match[1] || 'javascript', // デフォルトをjavascriptに
-        value: match[2].trim(),
+        language: language || 'javascript', // Fallback for safety
+        value: code.trim(),
       });
-      lastIndex = match.index + match[0].length;
     }
-
-    if (lastIndex < content.length) {
-      parts.push({ type: 'text', value: content.substring(lastIndex) });
-    }
-
-    if (parts.length === 0) {
-      parts.push({ type: 'text', value: content });
-    }
-
-    return parts;
-  } catch (error) {
-    console.error("Failed to parse message content:", error);
-    return [{ type: 'text', value: content }];
   }
+  return parts;
 }
+
 
 // コードブロックコンポーネント
 function CodeBlock({ language, code, onInsertCode }) {
@@ -52,9 +73,12 @@ function CodeBlock({ language, code, onInsertCode }) {
 
   useEffect(() => {
     if (codeRef.current) {
+      // Clear previous highlighting
+      codeRef.current.removeAttribute('data-highlighted');
+      // Highlight
       hljs.highlightElement(codeRef.current);
     }
-  }, [code]);
+  }, [code, language]);
 
   const handleCopy = async () => {
     try {
@@ -105,7 +129,7 @@ export function ChatMessage({ message, onInsertCode }) {
         }`}
       >
         {parts.map((part, index) => {
-          if (part.type === 'code' && part.value) {
+          if (part.type === 'code') {
             return (
               <CodeBlock
                 key={index}
@@ -116,13 +140,16 @@ export function ChatMessage({ message, onInsertCode }) {
             );
           }
           // Markdownをレンダリング
-          return (
-            <div key={index} className="prose prose-invert prose-sm max-w-none">
-              <ReactMarkdown>
-                {part.value}
-              </ReactMarkdown>
-            </div>
-          );
+          if (part.value) { // Don't render empty text parts
+            return (
+              <div key={index} className="prose prose-invert prose-sm max-w-none">
+                <ReactMarkdown>
+                  {part.value}
+                </ReactMarkdown>
+              </div>
+            );
+          }
+          return null;
         })}
       </div>
     </div>

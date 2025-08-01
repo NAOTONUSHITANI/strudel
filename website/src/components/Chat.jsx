@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChatMessage } from './ChatMessage.jsx';
 import { ArrowPathIcon } from '@heroicons/react/20/solid';
 
@@ -189,9 +189,21 @@ export function Chat({ onInsertCode, onClose }) {
         </div>
       </header>
       <main className="flex-1 p-4 overflow-y-auto space-y-4">
-        {messages.map((msg, index) => (
-          <ChatMessage key={index} message={msg} onInsertCode={onInsertCode} />
-        ))}
+        {messages.map((msg, index) => {
+          const prevMsg = index > 0 ? messages[index - 1] : null;
+          // Show separator when an assistant message follows a user message
+          const showSeparator =
+            prevMsg &&
+            prevMsg.role === 'user' &&
+            msg.role === 'assistant';
+
+          return (
+            <React.Fragment key={index}>
+              {showSeparator && <hr className="my-4 border-gray-700" />}
+              <ChatMessage message={msg} onInsertCode={onInsertCode} />
+            </React.Fragment>
+          );
+        })}
         {isLoading && (
           <div className="flex justify-start">
             <div className="bg-gray-700 rounded-lg px-4 py-2">
