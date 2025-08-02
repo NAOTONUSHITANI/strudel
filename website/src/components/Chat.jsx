@@ -26,6 +26,7 @@ export function Chat({ onInsertCode, onClose }) {
   const messagesEndRef = useRef(null);
   const [isComposing, setIsComposing] = useState(false);
   const [size, setSize] = useState({ width: 480, height: 600 }); // Default: 30rem = 480px
+  const abortControllerRef = useRef(null);
 
   // Resize handler logic
   useEffect(() => {
@@ -116,6 +117,14 @@ export function Chat({ onInsertCode, onClose }) {
     setMessages([INITIAL_MESSAGE]);
   };
 
+  const handleStop = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setLoading(false);
+  };
+
   const handleSend = async () => {
     if (!input.trim()) return;
   
@@ -125,7 +134,6 @@ export function Chat({ onInsertCode, onClose }) {
     setInput('');
     setLoading(true);
   
-    // Add a placeholder for the assistant's response
     setMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
   
     const messagesForApi = newMessages.filter(msg => msg.content !== INITIAL_MESSAGE.content);
@@ -133,9 +141,12 @@ export function Chat({ onInsertCode, onClose }) {
     const encodedData = b64Encode(requestPayload);
   
     const url = `/api/chat/${encodedData}`;
-  
+    
+    abortControllerRef.current = new AbortController();
+    const { signal } = abortControllerRef.current;
+
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, { signal });
   
       if (!response.ok) {
         const errorText = await response.text();
@@ -162,20 +173,34 @@ export function Chat({ onInsertCode, onClose }) {
       }
   
     } catch (error) {
-      console.error('Chat error:', error);
-      setMessages((prev) => {
-        const updatedMessages = [...prev];
-        const lastMessage = updatedMessages[updatedMessages.length - 1];
-        if (lastMessage.role === 'assistant' && lastMessage.content === '') {
-          lastMessage.content = `エラーが発生しました: ${error.message}`;
-        } else {
-          // If there's no placeholder, add a new error message
-          updatedMessages.push({ role: 'assistant', content: `エラーが発生しました: ${error.message}` });
-        }
-        return updatedMessages;
-      });
+      if (error.name === 'AbortError') {
+        console.log('Fetch aborted by user.');
+        setMessages((prev) => {
+          const updatedMessages = [...prev];
+          const lastMessage = updatedMessages[updatedMessages.length - 1];
+          if (lastMessage.role === 'assistant' && lastMessage.content === '') {
+            lastMessage.content = 'AIからの応答を停止しました。';
+          }
+          return updatedMessages;
+        });
+      } else {
+        console.error('Chat error:', error);
+        setMessages((prev) => {
+          const updatedMessages = [...prev];
+          const lastMessage = updatedMessages[updatedMessages.length - 1];
+          if (lastMessage.role === 'assistant' && lastMessage.content === '') {
+            lastMessage.content = `エラーが発生しました: ${error.message}`;
+          } else {
+            updatedMessages.push({ role: 'assistant', content: `エラーが発生しました: ${error.message}` });
+          }
+          return updatedMessages;
+        });
+      }
     } finally {
       setLoading(false);
+      if (abortControllerRef.current) {
+        abortControllerRef.current = null;
+      }
     }
   };
 
@@ -247,7 +272,7 @@ export function Chat({ onInsertCode, onClose }) {
             onCompositionStart={() => setIsComposing(true)}
             onCompositionEnd={() => setIsComposing(false)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && !isComposing) {
+              if (e.key === 'Enter' && !isComposing && !isLoading) {
                 e.preventDefault();
                 handleSend();
               }
@@ -256,20 +281,32 @@ export function Chat({ onInsertCode, onClose }) {
             className="flex-1 p-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
             disabled={isLoading}
           />
-          <button
-            onClick={handleSend}
-            className="p-2 bg-white text-black font-semibold rounded-lg disabled:bg-gray-500 disabled:cursor-not-allowed hover:bg-gray-200 flex items-center justify-center w-10 h-10"
-            disabled={isLoading || !input.trim()}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="w-5 h-5"
+          {isLoading ? (
+            <button
+              onClick={handleStop}
+              className="p-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 flex items-center justify-center w-10 h-10"
+              title="Stop generation"
             >
-              <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
-            </svg>
-          </button>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                <path fillRule="evenodd" d="M4.5 7.5a3 3 0 013-3h9a3 3 0 013 3v9a3 3 0 01-3-3h-9a3 3 0 01-3-3v-9z" clipRule="evenodd" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              onClick={handleSend}
+              className="p-2 bg-white text-black font-semibold rounded-lg disabled:bg-gray-500 disabled:cursor-not-allowed hover:bg-gray-200 flex items-center justify-center w-10 h-10"
+              disabled={!input.trim()}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="w-5 h-5"
+              >
+                <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+              </svg>
+            </button>
+          )}
         </div>
       </footer>
     </div>
