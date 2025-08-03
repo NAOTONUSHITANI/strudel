@@ -284,11 +284,11 @@ export function Chat({ onInsertCode, onClose }) {
           {isLoading ? (
             <button
               onClick={handleStop}
-              className="p-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 flex items-center justify-center w-10 h-10"
+              className="p-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 flex items-center justify-center w-10 h-10"
               title="Stop generation"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                <path fillRule="evenodd" d="M4.5 7.5a3 3 0 013-3h9a3 3 0 013 3v9a3 3 0 01-3-3h-9a3 3 0 01-3-3v-9z" clipRule="evenodd" />
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                <path fillRule="evenodd" d="M4.5 7.5a3 3 0 0 1 3-3h9a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-9a3 3 0 0 1-3-3v-9Z" clipRule="evenodd" />
               </svg>
             </button>
           ) : (

@@ -6,6 +6,11 @@
   directory = "/opt/build/repo/website/.netlify/functions"
 
 [[redirects]]
+  from = "/api/chat/*"
+  to = "/.netlify/functions/chat"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/.netlify/functions/___netlify-handler"
   status = 200
