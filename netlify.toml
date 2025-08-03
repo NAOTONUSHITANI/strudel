@@ -1,9 +1,17 @@
+# This file will override the settings in the Netlify UI.
 [build]
-  command = "pnpm build"
+  # Base directory is set to "website/" in the Netlify UI.
+  # This command will be run from within the "website/" directory.
+  command = "pnpm run build"
+  
+  # This path is relative to the Base directory.
+  # Netlify will look for "website/dist".
   publish = "dist"
 
+# This path is relative to the root of the repository.
+# Netlify will look for "website/netlify/functions".
 [functions]
-  directory = "/opt/build/repo/website/.netlify/functions"
+  directory = "website/netlify/functions"
 
 [[redirects]]
   from = "/api/chat/*"
