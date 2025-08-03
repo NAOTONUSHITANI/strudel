@@ -20,7 +20,13 @@ const handler: Handler = async (event: HandlerEvent) => {
     }
 
     const base64 = slug.replace(/-/g, '+').replace(/_/g, '/');
-    const decodedData = atob(base64);
+    const decodedB64 = atob(base64);
+    // The btoa hack on the client side requires this specific decoding sequence
+    const decodedData = decodeURIComponent(
+      Array.prototype.map.call(decodedB64, (c) => {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join('')
+    );
     const { messages } = JSON.parse(decodedData);
 
     if (!messages || !Array.isArray(messages)) {
