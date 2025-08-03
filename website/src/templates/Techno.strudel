@@ -1,0 +1,37 @@
+setcpm(130/4) // ダンスミュージックの標準的なBPM
+
+// 4種類の高速メロディパターンを定義
+let melody_a = note("<[c4 eb4] ~ f4 [c4 g4] [eb4 f4] ~>*4").fast(2);
+let melody_b = note("<c4 ~ eb4 [f4 c4] g3 ~ c4>*4").fast(2);
+let melody_c = note("<f4 ~ g4 [eb4 c4] f4 ~ c4>*4").fast(2);
+let melody_d = note("<g4 f4 eb4 c4 g3 eb4 f4 g4>*4").fast(2);
+
+stack(
+  // ドラム: 4つ打ちのキックと裏打ちのオープンハイハット
+  s("bd*4, [~ oh]*2")
+    .bank("RolandTR909")
+    .gain(0.9),
+
+  // ベース: フィルターが周期的に変化する、うねるようなベースライン
+  note("c2*8")
+    .s("sawtooth")
+    .lpf(sine.range(400, 1500).slow(4))
+    .gain(0.8),
+
+  // シンセリード: 4つのパターンを組み合わせ、エフェクトを強化
+  cat(melody_a, melody_b, melody_a, melody_c, melody_a, melody_b, melody_a, melody_d) // 8サイクルの展開
+    .s("gm_lead_2_sawtooth") // 攻撃的なsawtoothリード
+    .distort(0.2) // 少し歪みを加える
+    .phaser(4)    // フェイザーで揺らぎを追加
+    .delay(0.3)
+    .delayfeedback(0.6)
+    .gain(0.7),
+
+  // パッド: 曲の背景に広がりを与えるシンセパッド
+  chord("<Cm Ab>")
+    .voicing().n("0")
+    .s("gm_pad_2_warm")
+    .attack(1.5)
+    .release(2)
+    .gain(0.6)
+)

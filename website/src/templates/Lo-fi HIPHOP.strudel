@@ -1,6 +1,19 @@
-// Lo-fiなドラムパターン（少し揺らぎを加えています）
-p1: s("kick ~ snare ~ kick [~ snare] hh*2").swing(0.05).gain(0.9).bank("drumkit"),
-// ローズピアノによるジャジーなコード
-p2: n("<g4maj7 a4min7>").s("rhodes").release(2.5).gain(0.7),
-// シンプルなベースライン
-p3: n("g2 a2").s("bass").release(0.6).gain(0.8)
+// テンポを設定（BPM 80）
+setcpm(80/4) 
+
+// ドラムパターン（16ビートスウィング）
+$: stack(
+  s("bd ~ sd ~ bd bd sd ~").swing(16), // キックとスネアの組み合わせ
+  s("[~ hh]").gain(.3).swing(16).bank("akailinn") // スウィングハイハットで揺らぎを演出
+).bank("akailinn")
+
+// ベースライン
+$: note("<c2 ~ g2 b2 ~ c2>").s("sine") // シンプルなベースライン
+
+// コード進行
+$: chord("<Am7 Dm7 G7 CM7>").voicing().n("0").s("gm_epiano1") // ジャズ風のコード進行
+
+// 環境音の追加
+$: s("wind").gain(1) // 風の音で自然な環境を演出
+$: s("insect").gain(.5) // 虫の鳴き声でリラクゼーションを強調
+$: s("crackle").gain(5).loop(1)// レコードノイズ

@@ -70,15 +70,15 @@ export function TemplateSelector({ onInsert, onClose }) {
       className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center"
       onClick={handleOverlayClick}
     >
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl flex flex-col" style={{ maxHeight: '80vh' }}>
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl flex flex-col" style={{ maxHeight: '80vh' }}>
         <header className="flex justify-between items-center p-4 border-b">
           <h2 className="text-xl font-bold">コードテンプレート</h2>
           <button onClick={onClose} className="text-2xl text-gray-500 hover:text-gray-800">&times;</button>
         </header>
 
-        <main className="flex-grow flex p-4 gap-4 overflow-hidden">
+        <main className="flex-grow flex p-4 gap-4 overflow-hidden px-6">
           {/* 左側のテンプレートリスト */}
-          <aside className="w-1/4 flex-shrink-0 border-r pr-4 overflow-y-auto">
+          <aside className="w-1/3 flex-shrink-0 border-r pr-4 overflow-y-auto">
             <nav className="flex flex-col gap-2">
               {templates.map((template) => (
                 <button
@@ -97,9 +97,9 @@ export function TemplateSelector({ onInsert, onClose }) {
           </aside>
 
           {/* 右側のコードプレビュー */}
-          <section className="w-3/4 flex flex-col">
-            <div className="flex-grow bg-gray-800 text-white rounded-md p-4 overflow-y-auto">
-              <pre><code className="font-mono text-sm">{selectedTemplate.code}</code></pre>
+          <section className="w-2/3 flex flex-col">
+            <div className="flex-grow bg-gray-800 text-white rounded-md px-6 py-4 overflow-y-auto">
+              <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}><code className="font-mono text-sm">{selectedTemplate.code}</code></pre>
             </div>
             <footer className="flex-shrink-0 flex justify-end items-center gap-4 pt-4">
               <button
