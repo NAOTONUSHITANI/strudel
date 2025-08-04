@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import OpenAI from 'openai';
 import { OpenAIStream, StreamingTextResponse } from 'ai';
-import systemPromptContent from '../../../../system_prompt.txt?raw';
+import systemPromptContent from '../../system_prompt.txt?raw';
 
 const openai = new OpenAI({
   apiKey: import.meta.env.OPENAI_API_KEY,

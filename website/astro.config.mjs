@@ -60,7 +60,9 @@ const options = {
 // https://astro.build/config
 export default defineConfig({
   output: 'server',
-  adapter: netlify(),
+  adapter: netlify({
+    includeFiles: ['./src/system_prompt.txt'],
+  }),
   integrations: [
     react(),
     mdx(options),
