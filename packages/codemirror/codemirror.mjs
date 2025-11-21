@@ -42,7 +42,7 @@ const highlightTheme = EditorView.baseTheme({
     boxShadow: 'inset 0 0 0 1px rgba(34,197,94,0.36), 0 0 18px rgba(34,197,94,0.16)',
     borderRadius: '6px',
     transition: 'background-color 700ms ease, box-shadow 700ms ease',
-    animation: 'cm-ai-flash 1200ms cubic-bezier(.22,.9,.34,1) 1',
+    animation: 'cm-ai-flash 3000ms cubic-bezier(.22,.9,.34,1) 1',
     willChange: 'box-shadow, background-color',
   },
 });
