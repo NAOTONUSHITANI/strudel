@@ -23,7 +23,7 @@ export const handler = async (event) => {
 
     // 2. 環境変数からAPIキーとモデル名を取得
     const apiKey = process.env.OPENAI_API_KEY;
-    const modelName = process.env.OPENAI_MODEL_NAME || 'gpt-4o';
+    const modelName = 'ft:gpt-4o-mini-2024-07-18:personal::CYnz0Otq';
 
     if (!apiKey) {
       throw new Error('APIキーが設定されていません。');

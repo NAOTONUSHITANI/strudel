@@ -36,7 +36,14 @@ export const addHighlight = StateEffect.define();
 
 const highlightTheme = EditorView.baseTheme({
   '.cm-ai-generated': {
-    filter: 'hue-rotate(180deg)', // Rotate the hue to change colors while preserving syntax highlighting
+    // More pronounced flash animation for AI-inserted ranges so users notice edits
+    // Use green tones consistent with Strudel theme
+    backgroundColor: 'rgba(34,197,94,0.12)',
+    boxShadow: 'inset 0 0 0 1px rgba(34,197,94,0.36), 0 0 18px rgba(34,197,94,0.16)',
+    borderRadius: '6px',
+    transition: 'background-color 700ms ease, box-shadow 700ms ease',
+    animation: 'cm-ai-flash 3000ms cubic-bezier(.22,.9,.34,1) 1',
+    willChange: 'box-shadow, background-color',
   },
 });
 
@@ -57,6 +64,34 @@ export const highlightField = StateField.define({
   },
   provide: (f) => EditorView.decorations.from(f),
 });
+
+// Safely inject keyframes for the AI highlight flash when running in a browser environment.
+// Guard with `typeof document !== 'undefined'` so SSR/build import analysis doesn't execute DOM code.
+if (typeof document !== 'undefined') {
+  const styleId = 'cm-ai-flash-keyframes';
+  if (!document.getElementById(styleId)) {
+    const flashKeyframes = `
+@keyframes cm-ai-flash {
+  0% {
+    box-shadow: inset 0 0 0 3px rgba(34,197,94,0.85), 0 0 36px rgba(34,197,94,0.28);
+    background-color: rgba(34,197,94,0.22);
+  }
+  40% {
+    box-shadow: inset 0 0 0 1px rgba(34,197,94,0.5), 0 0 18px rgba(34,197,94,0.12);
+    background-color: rgba(34,197,94,0.12);
+  }
+  100% {
+    box-shadow: inset 0 0 0 1px rgba(34,197,94,0.28), 0 0 12px rgba(34,197,94,0.08);
+    background-color: rgba(34,197,94,0.08);
+  }
+}
+    `;
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = flashKeyframes;
+    document.head.appendChild(style);
+  }
+}
 
 const extensions = {
   isLineWrappingEnabled: (on) => (on ? EditorView.lineWrapping : []),

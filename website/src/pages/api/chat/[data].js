@@ -32,6 +32,22 @@ export async function GET({ params }) {
       return new Response(JSON.stringify({ error: 'Invalid messages format' }), { status: 400 });
     }
 
+    // 3. OpenAIに送るシステムプロンプトを強化（サーバー側で上書き）
+    const enforcementPrompt = [
+      '以下のルールを厳密に上書き指示として適用してください。',
+      '',
+      '1) あなたの出力は必ずStrudel（JavaScriptベース）の実行可能なコードのみとし、他の言語（Python等）は一切出力してはいけません。',
+      '',
+      '2) 出力するコードはそのままコピー＆ペーストしてライブで再生可能であり、構文エラーや未定義関数を含まないことを保証してください。',
+      '',
+      '3) ユーザーの意図が不明瞭・曖昧な場合は、コードを生成せずに、確認のための明確な質問を返してください。',
+      '',
+      '4) 出力は必ずコードブロックで囲み、適切な言語タグ（```strudel または ```js）を付けてください。',
+      '',
+      '5) 生成したコードは自己検証を行い、問題がある場合は修正してから出力してください。',
+    ].join('\n');
+
+    // 既存の systemPrompt の前に enforcementPrompt を挿入して送る
     // 3. fetchを使用してOpenAI APIをストリーミングモードで呼び出す
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -42,6 +58,10 @@ export async function GET({ params }) {
       body: JSON.stringify({
         model: 'gpt-4o',
         messages: [
+          {
+            role: 'system',
+            content: enforcementPrompt,
+          },
           {
             role: 'system',
             content: systemPrompt,

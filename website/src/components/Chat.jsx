@@ -7,7 +7,7 @@ const INITIAL_MESSAGE = { role: 'assistant', content: 'こんにちは！Strudel
 const MIN_WIDTH = 300; // Minimum width in pixels
 const MIN_HEIGHT = 200; // Minimum height in pixels
 
-export function Chat({ onInsertCode, onClose }) {
+export function Chat({ onInsertCode, onClose, onReplaceSelection, hasSelection }) {
   const [messages, setMessages] = useState(() => {
     try {
       const savedHistory = localStorage.getItem(CHAT_HISTORY_KEY);
@@ -27,6 +27,8 @@ export function Chat({ onInsertCode, onClose }) {
   const [isComposing, setIsComposing] = useState(false);
   const [size, setSize] = useState({ width: 480, height: 600 }); // Default: 30rem = 480px
   const abortControllerRef = useRef(null);
+  const [openChooserIndex, setOpenChooserIndex] = useState(null);
+  const [chooserMode, setChooserMode] = useState('insert'); // 'insert' or 'replace'
 
   // Resize handler logic
   useEffect(() => {
@@ -94,6 +96,22 @@ export function Chat({ onInsertCode, onClose }) {
   function b64Encode(str) {
     const base64 = btoa(unescape(encodeURIComponent(str)));
     return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  }
+
+  // 全ての fenced code blocks を抽出して配列で返す
+  function extractCodeBlocks(text) {
+    if (typeof text !== 'string') return [];
+    const re = /```(?:\s*([^\n]*))?\n?([\s\S]*?)```/g;
+    const blocks = [];
+    let m;
+    while ((m = re.exec(text)) !== null) {
+      const lang = (m[1] || '').trim();
+      let code = m[2] ?? '';
+      if (code.startsWith('\n')) code = code.slice(1);
+      if (code.endsWith('\n')) code = code.slice(0, -1);
+      blocks.push({ language: lang || 'text', code, raw: m[0] });
+    }
+    return blocks;
   }
 
   // 新しいメッセージで自動スクロール
@@ -231,10 +249,7 @@ export function Chat({ onInsertCode, onClose }) {
       <main className="flex-1 p-4 overflow-y-auto space-y-4">
         {messages.map((msg, index) => {
           const prevMsg = index > 0 ? messages[index - 1] : null;
-          const showSeparator =
-            prevMsg &&
-            prevMsg.role === 'user' &&
-            msg.role === 'assistant';
+          const showSeparator = prevMsg && prevMsg.role === 'user' && msg.role === 'assistant';
 
           // While loading, if this is the last message and it's an empty assistant placeholder,
           // don't render it. The loading indicator will be shown instead.
@@ -242,10 +257,120 @@ export function Chat({ onInsertCode, onClose }) {
             return null; // Prevents the empty bubble from appearing
           }
 
+          // Non-assistant messages: keep existing rendering
+          if (msg.role !== 'assistant') {
+            return (
+              <React.Fragment key={index}>
+                {showSeparator && <hr className="my-4 border-gray-700" />}
+                <ChatMessage message={msg} onInsertCode={onInsertCode} />
+              </React.Fragment>
+            );
+          }
+
+          // Assistant messages: render message, then show "エディタに反映" button
+          // If multiple code blocks exist, show a chooser to pick one.
+          const blocks = extractCodeBlocks(msg.content || '');
+          const preferred = blocks.filter(b => ['js', 'javascript', 'strudel'].includes((b.language || '').toLowerCase()));
+
           return (
             <React.Fragment key={index}>
               {showSeparator && <hr className="my-4 border-gray-700" />}
-              <ChatMessage message={msg} onInsertCode={onInsertCode} />
+              <ChatMessage message={msg} onInsertCode={onInsertCode} hideInlineInsert={true} />
+
+              {blocks.length > 0 && (
+                <div className="px-4 mt-2 flex flex-col items-end">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        try {
+                          if (preferred.length === 1) {
+                            onInsertCode?.(preferred[0].code);
+                            return;
+                          }
+                          if (preferred.length > 1) {
+                            // multiple preferred: open chooser filtered to preferred
+                            setChooserMode('insert');
+                            setOpenChooserIndex(openChooserIndex === index ? null : index);
+                            return;
+                          }
+
+                          // No preferred (not JS/Strudel) -> warn and require explicit confirmation
+                          const proceed = window.confirm(
+                            'AIの返答はStrudel/JavaScriptではない可能性があります。挿入するとエラーが発生するかもしれません。挿入しますか？'
+                          );
+                          if (proceed && blocks.length > 0) {
+                            onInsertCode?.(blocks[0].code);
+                          }
+                        } catch (err) {
+                          console.error('onInsertCode handler threw:', err);
+                        }
+                      }}
+                      className={`px-3 py-1 rounded-lg ${preferred.length > 0 ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-yellow-600 hover:bg-yellow-500 text-white'}`}
+                      title={preferred.length > 0 ? 'AIの提案をエディタに挿入します' : 'AIの返答がJSではありません。挿入前に確認が必要です'}
+                    >
+                      エディタに反映
+                    </button>
+                    {hasSelection && blocks.length > 0 && (
+                      <button
+                        onClick={() => {
+                          try {
+                            if (preferred.length === 1) {
+                              onReplaceSelection?.(preferred[0].code);
+                              return;
+                            }
+                            if (preferred.length > 1) {
+                              // multiple preferred: open chooser in replace mode
+                              setChooserMode('replace');
+                              setOpenChooserIndex(openChooserIndex === index ? null : index);
+                              return;
+                            }
+
+                            // No preferred (not JS/Strudel) -> warn and require explicit confirmation
+                            const proceed = window.confirm(
+                              'AIの返答はStrudel/JavaScriptではない可能性があります。選択範囲を置き換えるとエラーが発生するかもしれません。置き換えますか？'
+                            );
+                            if (proceed && blocks.length > 0) {
+                              onReplaceSelection?.(blocks[0].code);
+                            }
+                          } catch (err) {
+                            console.error('onReplaceSelection handler threw:', err);
+                          }
+                        }}
+                        className={`px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white`}
+                        title={'選択範囲をAIの提案で置き換えます'}
+                      >
+                        選択範囲を置き換え
+                      </button>
+                    )}
+                  </div>
+
+                  {openChooserIndex === index && blocks.length > 1 && (
+                    <div className="mt-2 w-64 bg-gray-800 border border-gray-700 rounded-md shadow-lg p-2" role="menu">
+                      {blocks.map((b, bi) => (
+                        <button
+                          key={bi}
+                          onClick={() => {
+                            try {
+                              if (chooserMode === 'replace') {
+                                onReplaceSelection?.(b.code);
+                              } else {
+                                onInsertCode?.(b.code);
+                              }
+                            } catch (err) {
+                              console.error('chooser handler threw:', err);
+                            }
+                            setOpenChooserIndex(null);
+                          }}
+                          className="w-full text-left px-2 py-1 rounded hover:bg-gray-700"
+                        >
+                          <div className="text-xs text-gray-300">{b.language}</div>
+                          <div className="truncate text-sm text-gray-100">{b.code.split('\n')[0]}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </React.Fragment>
           );
         })}
@@ -311,4 +436,17 @@ export function Chat({ onInsertCode, onClose }) {
       </footer>
     </div>
   );
+}
+
+// ヘルパー: テキストから最初の fenced code block の中身だけを取り出す
+function extractFirstCodeBlock(text) {
+  if (typeof text !== 'string') return null;
+  const re = /```(?:\s*[^\n]*)?\n?([\s\S]*?)```/;
+  const match = re.exec(text);
+  if (!match) return null;
+
+  let content = match[1] ?? '';
+  if (content.startsWith('\n')) content = content.slice(1);
+  if (content.endsWith('\n')) content = content.slice(0, -1);
+  return content;
 }
