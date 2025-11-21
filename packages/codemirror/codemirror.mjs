@@ -36,7 +36,13 @@ export const addHighlight = StateEffect.define();
 
 const highlightTheme = EditorView.baseTheme({
   '.cm-ai-generated': {
-    filter: 'hue-rotate(180deg)', // Rotate the hue to change colors while preserving syntax highlighting
+    // Slight visual improvements plus animation to help the flash stand out
+    // Use blue-ish tones (instead of hue-rotation) so the highlight reads as blue/green
+    backgroundColor: 'rgba(34, 197, 94, 0.08)',
+    boxShadow: 'inset 0 0 0 1px rgba(34,197,94,0.28), 0 0 12px rgba(34,197,94,0.08)',
+    borderRadius: '6px',
+    transition: 'background-color 700ms ease, box-shadow 700ms ease',
+    animation: 'cm-ai-flash 900ms ease',
   },
 });
 
@@ -57,6 +63,34 @@ export const highlightField = StateField.define({
   },
   provide: (f) => EditorView.decorations.from(f),
 });
+
+// Safely inject keyframes for the AI highlight flash when running in a browser environment.
+// Guard with `typeof document !== 'undefined'` so SSR/build import analysis doesn't execute DOM code.
+if (typeof document !== 'undefined') {
+  const styleId = 'cm-ai-flash-keyframes';
+  if (!document.getElementById(styleId)) {
+    const flashKeyframes = `
+@keyframes cm-ai-flash {
+  0% {
+    box-shadow: inset 0 0 0 2px rgba(34,197,94,0.6), 0 0 20px rgba(34,197,94,0.18);
+    background-color: rgba(34,197,94,0.14);
+  }
+  60% {
+    box-shadow: inset 0 0 0 1px rgba(34,197,94,0.36), 0 0 12px rgba(34,197,94,0.08);
+    background-color: rgba(34,197,94,0.10);
+  }
+  100% {
+    box-shadow: inset 0 0 0 1px rgba(34,197,94,0.28), 0 0 12px rgba(34,197,94,0.08);
+    background-color: rgba(34,197,94,0.08);
+  }
+}
+    `;
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = flashKeyframes;
+    document.head.appendChild(style);
+  }
+}
 
 const extensions = {
   isLineWrappingEnabled: (on) => (on ? EditorView.lineWrapping : []),

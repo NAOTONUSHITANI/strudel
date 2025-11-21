@@ -1,4 +1,5 @@
 import { addHighlight, highlightField } from '@strudel/codemirror/codemirror.mjs';
+import { EditorSelection } from '@codemirror/state';
 import { useState, useEffect } from 'react';
 import Loader from '@src/repl/components/Loader';
 import { HorizontalPanel, VerticalPanel } from '@src/repl/components/panel/Panel';
@@ -62,6 +63,7 @@ export default function ReplEditor(Props) {
   const { panelPosition, isZen } = settings;
   const [isTemplateSelectorOpen, setTemplateSelectorOpen] = useState(false);
   const [isChatVisible, setChatVisible] = useState(false);
+  const [hasSelection, setHasSelection] = useState(false);
   const [codeRatio, setCodeRatio] = useState(0);
 
   useEffect(() => {
@@ -97,7 +99,19 @@ export default function ReplEditor(Props) {
   };
 
   const handleToggleChat = () => {
-    setChatVisible(prev => !prev);
+    setChatVisible(prev => {
+      const next = !prev;
+      // when opening the chat, capture whether there's an active selection
+      if (next && view && view.state) {
+        try {
+          const s = view.state.selection.main;
+          setHasSelection(s.from !== s.to);
+        } catch (e) {
+          setHasSelection(false);
+        }
+      }
+      return next;
+    });
   };
 
   const handleInsertCode = (code) => {
@@ -120,12 +134,57 @@ export default function ReplEditor(Props) {
 
       editorView.dispatch({
         changes: { from, to, insert: code },
+        selection: EditorSelection.single(insertTo),
         effects: addHighlight.of({ from: insertFrom, to: insertTo }),
       });
       editorView.focus();
     } catch (err) {
       console.error('Failed to insert code:', err);
       alert('コードの挿入に失敗しました。もう一度お試しください。');
+    }
+      // after insertion, update selection flag
+      try {
+        const s = view.state.selection.main;
+        setHasSelection(s.from !== s.to);
+      } catch (e) {
+        setHasSelection(false);
+      }
+  };
+
+  const handleReplaceSelection = (code) => {
+    if (!view) {
+      console.error('Editor view is not ready for replace.');
+      alert('エディタの準備ができていません。少し待ってからもう一度お試しください。');
+      return;
+    }
+    const editorView = view;
+    const state = editorView.state;
+    if (!state) {
+      console.error('Editor state is not available.');
+      alert('エディタの状態が取得できません。ページを再読み込みしてください。');
+      return;
+    }
+    try {
+      const { from, to } = state.selection.main;
+      const replaceFrom = from;
+      const replaceTo = from + code.length;
+
+      editorView.dispatch({
+        changes: { from, to, insert: code },
+        selection: EditorSelection.single(replaceTo),
+        effects: addHighlight.of({ from: replaceFrom, to: replaceTo }),
+      });
+      editorView.focus();
+    } catch (err) {
+      console.error('Failed to replace selection:', err);
+      alert('選択範囲の置き換えに失敗しました。もう一度お試しください。');
+    }
+    // after replace, update selection flag
+    try {
+      const s = view.state.selection.main;
+      setHasSelection(s.from !== s.to);
+    } catch (e) {
+      setHasSelection(false);
     }
   };
 
@@ -153,7 +212,14 @@ export default function ReplEditor(Props) {
           onClose={() => setTemplateSelectorOpen(false)}
         />
       )}
-      {isChatVisible && <Chat onInsertCode={handleInsertCode} onClose={() => setChatVisible(false)} />}
+      {isChatVisible && (
+        <Chat
+          onInsertCode={handleInsertCode}
+          onReplaceSelection={handleReplaceSelection}
+          hasSelection={hasSelection}
+          onClose={() => setChatVisible(false)}
+        />
+      )}
     </div>
   );
 }

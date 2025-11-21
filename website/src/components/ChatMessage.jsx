@@ -67,7 +67,7 @@ function parseMessageContent(content) {
 
 
 // コードブロックコンポーネント
-function CodeBlock({ language, code, onInsertCode }) {
+function CodeBlock({ language, code, onInsertCode, hideInlineInsert }) {
   const codeRef = useRef(null);
   const [copySuccess, setCopySuccess] = useState('');
 
@@ -95,14 +95,16 @@ function CodeBlock({ language, code, onInsertCode }) {
       <div className="flex justify-between items-center px-3 py-1 bg-gray-900 text-xs text-gray-400">
         <span>{language}</span>
         <div className="flex gap-2">
-          <button
-            onClick={() => onInsertCode(code)}
-            className="flex items-center gap-1 hover:text-white"
-            title="Insert into editor"
-          >
-            <PlusCircleIcon className="w-4 h-4" />
-            Insert
-          </button>
+          {!hideInlineInsert && (
+            <button
+              onClick={() => onInsertCode(code)}
+              className="flex items-center gap-1 hover:text-white"
+              title="Insert into editor"
+            >
+              <PlusCircleIcon className="w-4 h-4" />
+              Insert
+            </button>
+          )}
           <button
             onClick={handleCopy}
             className="flex items-center gap-1 hover:text-white"
@@ -118,7 +120,7 @@ function CodeBlock({ language, code, onInsertCode }) {
   );
 }
 
-export function ChatMessage({ message, onInsertCode }) {
+export function ChatMessage({ message, onInsertCode, hideInlineInsert }) {
   const parts = parseMessageContent(message.content);
 
   return (
@@ -136,6 +138,7 @@ export function ChatMessage({ message, onInsertCode }) {
                 language={part.language}
                 code={part.value}
                 onInsertCode={onInsertCode}
+                hideInlineInsert={hideInlineInsert}
               />
             );
           }
