@@ -27,6 +27,7 @@
     "@nanostores/persistent": "^0.10.2",
     "@nanostores/react": "^0.8.4",
     "@strudel/codemirror": "workspace:*",
+    "@codemirror/state": "^6.5.2",
     "@strudel/core": "workspace:*",
     "@strudel/csound": "workspace:*",
     "@strudel/desktopbridge": "workspace:*",
