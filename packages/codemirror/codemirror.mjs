@@ -36,13 +36,14 @@ export const addHighlight = StateEffect.define();
 
 const highlightTheme = EditorView.baseTheme({
   '.cm-ai-generated': {
-    // Slight visual improvements plus animation to help the flash stand out
-    // Use blue-ish tones (instead of hue-rotation) so the highlight reads as blue/green
-    backgroundColor: 'rgba(34, 197, 94, 0.08)',
-    boxShadow: 'inset 0 0 0 1px rgba(34,197,94,0.28), 0 0 12px rgba(34,197,94,0.08)',
+    // More pronounced flash animation for AI-inserted ranges so users notice edits
+    // Use green tones consistent with Strudel theme
+    backgroundColor: 'rgba(34,197,94,0.12)',
+    boxShadow: 'inset 0 0 0 1px rgba(34,197,94,0.36), 0 0 18px rgba(34,197,94,0.16)',
     borderRadius: '6px',
     transition: 'background-color 700ms ease, box-shadow 700ms ease',
-    animation: 'cm-ai-flash 900ms ease',
+    animation: 'cm-ai-flash 1200ms cubic-bezier(.22,.9,.34,1) 1',
+    willChange: 'box-shadow, background-color',
   },
 });
 
@@ -72,12 +73,12 @@ if (typeof document !== 'undefined') {
     const flashKeyframes = `
 @keyframes cm-ai-flash {
   0% {
-    box-shadow: inset 0 0 0 2px rgba(34,197,94,0.6), 0 0 20px rgba(34,197,94,0.18);
-    background-color: rgba(34,197,94,0.14);
+    box-shadow: inset 0 0 0 3px rgba(34,197,94,0.85), 0 0 36px rgba(34,197,94,0.28);
+    background-color: rgba(34,197,94,0.22);
   }
-  60% {
-    box-shadow: inset 0 0 0 1px rgba(34,197,94,0.36), 0 0 12px rgba(34,197,94,0.08);
-    background-color: rgba(34,197,94,0.10);
+  40% {
+    box-shadow: inset 0 0 0 1px rgba(34,197,94,0.5), 0 0 18px rgba(34,197,94,0.12);
+    background-color: rgba(34,197,94,0.12);
   }
   100% {
     box-shadow: inset 0 0 0 1px rgba(34,197,94,0.28), 0 0 12px rgba(34,197,94,0.08);
